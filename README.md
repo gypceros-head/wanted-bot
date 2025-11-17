@@ -68,4 +68,4 @@ SNSでサービスを宣伝できればと考えています。
 https://www.figma.com/design/mx4fZvFmHEBQIbo6C2zmSk/WANTED?node-id=0-1&t=863bDUcOfMxelJPQ-1
 
 # ■ ER図
-https://gyazo.com/828d954333b7b556f5c3e30ef4b2670a
+[![Image from Gyazo](https://i.gyazo.com/828d954333b7b556f5c3e30ef4b2670a.png)](https://gyazo.com/828d954333b7b556f5c3e30ef4b2670a)
