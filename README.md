@@ -60,6 +60,7 @@ SNSでサービスを宣伝できればと考えています。
 * acts_as_commentable
 * acts_as_votable
 ### 認証機能
+* Devise
 * Omniauth（外部認証）
 ### デプロイ
 * Render
