@@ -26,6 +26,8 @@ class Post < ApplicationRecord
   has_many :bookmarks, dependent: :destroy
   has_many :bookmarked_users, through: :bookmarks, source: :user
 
+  has_one :blueprint, dependent: :destroy  # ★ ここを追加
+
   has_one_attached :image # ActiveStorage で画像を扱う
 
   validates :title, presence: true
