@@ -1,0 +1,51 @@
+/ app/views/devise/sessions/new.html.slim
+
+- content_for :title, "ログイン"
+
+div.flex.justify-center
+  .w-full.max-w-md.bg-white.shadow-md.rounded-lg.px-6.py-8
+    h1.text-2xl.font-bold.text-center.mb-6
+      | ログイン
+
+    / フラッシュメッセージ（主にログイン失敗時）
+    - if flash[:alert].present?
+      .mb-4.rounded-md.bg-red-100.text-red-700.text-sm.p-3
+        = flash[:alert]
+
+    / 必要なら notice も表示
+    - if flash[:notice].present?
+      .mb-4.rounded-md.bg-emerald-100.text-emerald-700.text-sm.p-3
+        = flash[:notice]
+
+    = form_for(resource, as: resource_name, url: session_path(resource_name)) do |f|
+      .mb-4
+        = f.label :email, "メールアドレス", class: "block text-sm font-medium text-slate-700 mb-1"
+        = f.email_field :email,
+          autofocus: true,
+          autocomplete: "email",
+          class: "block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+
+      .mb-4
+        = f.label :password, "パスワード", class: "block text-sm font-medium text-slate-700 mb-1"
+        = f.password_field :password,
+          autocomplete: "current-password",
+          class: "block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+
+      - if devise_mapping.rememberable?
+        .mb-4.flex.items-center
+          = f.check_box :remember_me, class: "h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+          = f.label :remember_me, "ログイン状態を保持する", class: "ml-2 block text-sm text-slate-700"
+
+      .mb-4
+        = f.submit "ログイン",
+          class: "w-full inline-flex justify-center items-center rounded-md bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500"
+
+    .mt-4.text-center.text-sm.text-slate-600
+      | アカウントをお持ちでない方は
+      = link_to "新規登録", new_registration_path(resource_name),
+        class: "text-violet-600 hover:underline ml-1"
+      | から作成できます。
+
+    .mt-2.text-center.text-xs
+      = link_to "パスワードをお忘れですか？", new_password_path(resource_name),
+        class: "text-slate-500 hover:underline"
