@@ -20,10 +20,9 @@ html
   body class="min-h-screen flex flex-col bg-cyan-100"
     = render "shared/header"
 
-    - flash.each do |key, message|
-      - next if message.blank?
-      .w-full.py-2.text-sm.text-center class=flash_css_class(key)
-        = message
+    / フラッシュメッセージ
+    .container.mx-auto.px-4.py-4
+      = render "shared/flash"
 
     main.flex-1
       .container.mx-auto.px-4.py-6
