@@ -1,0 +1,32 @@
+/ app/views/shared/_header.html.slim
+header.bg-violet-700.text-white.shadow
+  .container.mx-auto.px-4.py-3
+    .flex.items-center.space-x-3
+      = image_tag "logo.png",
+        alt: "WANTED BOT ロゴ",
+        class: "h-10 w-auto inline-block"
+
+      span.font-semibold.text-lg ロボット・イン・モンタージュ
+
+    / 右側：本来ログイン状態によって分岐するメニュー（今は全てコメントアウト）
+    .mt-2.text-sm
+
+      / - if user_signed_in?
+      /   span
+      /     | ログイン中：
+      /     span.font-semibold = current_user.name
+
+      /   = link_to "投稿一覧", posts_path, class: "hover:underline"
+
+      /   = button_to "ログアウト",
+      /     destroy_user_session_path,
+      /     method: :delete,
+      /     data: { turbo_confirm: "ログアウトしますか？" },
+      /     class: "bg-violet-600 hover:bg-violet-700 text-white px-3 py-1 rounded"
+
+      / - else
+      /   = link_to "投稿一覧", posts_path, class: "hover:underline"
+      /   = link_to "ログイン", new_user_session_path, class: "bg-violet-500 hover:bg-violet-600 text-white px-3 py-1 rounded"
+      /   = link_to "新規登録", new_user_registration_path, class: "border border-white/80 hover:bg-white hover:text-violet-700 px-3 py-1 rounded"
+
+      / ※ 上記は後で認証機能が整い次第、少しずつ戻していきます
