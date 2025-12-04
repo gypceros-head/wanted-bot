@@ -1,32 +1,45 @@
 / app/views/shared/_header.html.slim
 header.bg-violet-700.text-white.shadow
-  .container.mx-auto.px-4.py-3
-    .flex.items-center.space-x-3
-      = image_tag "logo.png",
-        alt: "WANTED BOT ロゴ",
-        class: "h-10 w-auto inline-block"
+  .container.mx-auto.px-4.py-3.flex.items-center.justify-between
 
-      span.font-semibold.text-lg ロボット・イン・モンタージュ
+    / 左側：ロゴ＋サービス名
+    .flex.items-center.space-x-2
+      = link_to root_path, class: "flex items-center space-x-2" do
+        = image_tag "logo.png", alt: "WANTED BOT ロゴ", class: "h-10 w-auto inline-block"
+        span.font-semibold.text-lg ロボット・イン・モンタージュ
 
-    / 右側：本来ログイン状態によって分岐するメニュー（今は全てコメントアウト）
-    .mt-2.text-sm
+    / 右側：ナビゲーション
+    .flex.items-center.space-x-4.text-sm
 
-      / - if user_signed_in?
-      /   span
-      /     | ログイン中：
-      /     span.font-semibold = current_user.name
+      / ===== 投稿一覧リンク・コメントアウト =====
+      / = link_to "投稿一覧", posts_path, class: "hover:underline"
 
-      /   = link_to "投稿一覧", posts_path, class: "hover:underline"
+      / ===== 仮リンク（rootへ） =====
+      = link_to "投稿一覧（仮）", root_path, class: "hover:underline"
 
-      /   = button_to "ログアウト",
-      /     destroy_user_session_path,
-      /     method: :delete,
-      /     data: { turbo_confirm: "ログアウトしますか？" },
-      /     class: "bg-violet-600 hover:bg-violet-700 text-white px-3 py-1 rounded"
+      - if user_signed_in?
 
-      / - else
-      /   = link_to "投稿一覧", posts_path, class: "hover:underline"
-      /   = link_to "ログイン", new_user_session_path, class: "bg-violet-500 hover:bg-violet-600 text-white px-3 py-1 rounded"
-      /   = link_to "新規登録", new_user_registration_path, class: "border border-white/80 hover:bg-white hover:text-violet-700 px-3 py-1 rounded"
+        / ▼ 名前をクリックすると開くドロップダウン
+        details.relative
+          summary.flex.items-center.cursor-pointer.list-none
+            span.text-xs.mr-2 ログイン中
+            span.mr-1.font-semibold = current_user.name
+            span.text-xs ▼
 
-      / ※ 上記は後で認証機能が整い次第、少しずつ戻していきます
+          / ドロップダウンメニュー
+          ul.absolute.right-0.mt-2.w-40.bg-white.text-slate-800.rounded-md.shadow-lg.border.border-slate-200.z-50
+            li
+              = button_to "ログアウト",
+                destroy_user_session_path,
+                method: :delete,
+                data: { turbo_confirm: "ログアウトしますか？" },
+                class: "block w-full text-left px-4 py-2 text-sm hover:bg-slate-100"
+
+      - else
+        = link_to "ログイン",
+          new_user_session_path,
+          class: "bg-violet-500 hover:bg-violet-600 text-white px-3 py-1 rounded"
+
+        = link_to "新規登録",
+          new_user_registration_path,
+          class: "border border-white/80 hover:bg-white hover:text-violet-700 px-3 py-1 rounded"
