@@ -1,0 +1,53 @@
+/ app/views/devise/registrations/new.html.slim
+
+- content_for :title, "新規登録"
+
+div.flex.justify-center
+  .w-full.max-w-md.bg-white.shadow-md.rounded-lg.px-6.py-8
+    h1.text-2xl.font-bold.text-center.mb-6
+      | 新規ユーザー登録
+
+    / エラーメッセージ表示
+    - if resource.errors.any?
+      .mb-4.rounded-md.bg-red-100.text-red-700.text-sm.p-3
+        p.font-semibold.mb-1 登録に失敗しました：
+        ul.list-disc.list-inside
+          - resource.errors.full_messages.each do |message|
+            li = message
+
+    = form_for(resource, as: resource_name, url: registration_path(resource_name)) do |f|
+      .mb-4
+        = f.label :name, "ユーザー名", class: "block text-sm font-medium text-slate-700 mb-1"
+        = f.text_field :name,
+          autofocus: true,
+          autocomplete: "name",
+          class: "block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+
+      .mb-4
+        = f.label :email, "メールアドレス", class: "block text-sm font-medium text-slate-700 mb-1"
+        = f.email_field :email,
+          autocomplete: "email",
+          class: "block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+
+      .mb-4
+        = f.label :password, "パスワード", class: "block text-sm font-medium text-slate-700 mb-1"
+        - if @minimum_password_length
+          p.text-xs.text-slate-500.mb-1 = "#{@minimum_password_length}文字以上で入力してください"
+        = f.password_field :password,
+          autocomplete: "new-password",
+          class: "block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+
+      .mb-6
+        = f.label :password_confirmation, "パスワード（確認）", class: "block text-sm font-medium text-slate-700 mb-1"
+        = f.password_field :password_confirmation,
+          autocomplete: "new-password",
+          class: "block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+
+      .mb-4
+        = f.submit "登録する",
+          class: "w-full inline-flex justify-center items-center rounded-md bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500"
+
+    .mt-4.text-center.text-sm.text-slate-600
+      | すでにアカウントをお持ちの方は
+      = link_to "こちら", new_session_path(resource_name), class: "text-violet-600 hover:underline ml-1"
+      | からログインできます。
