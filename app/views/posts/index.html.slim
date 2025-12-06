@@ -1,19 +1,35 @@
 .main-container
   .container.mx-auto.px-4.py-8
-    h1.text-2xl.font-bold.mb-4 投稿一覧（仮）
+    h1.text-2xl.font-bold.mb-4 投稿一覧
 
     - if @posts.present?
-      ul.space-y-4
+      / カードのグリッドレイアウト
+      .grid.grid-cols-1.md:grid-cols-2.lg:grid-cols-3.gap-6
         - @posts.each do |post|
-          li.border.rounded-lg.p-4.bg-white
-            h2.text-xl.font-semibold = link_to post.title, post_path(post), class: "text-violet-700 hover:underline"
-            p.text-sm.text-slate-500.mt-1
-              | 投稿日:
-              = l post.created_at, format: :short
-            p.mt-2.text-slate-700.line-clamp-2 = truncate(post.caption, length: 80)
+          = link_to post_path(post), class: "block group" do
+            .bg-white.rounded-xl.shadow-sm.border.border-slate-200.overflow-hidden.flex.flex-col.h-full
+              / ▼ サムネイル
+              div class="relative w-full aspect-[3/4] bg-slate-100 overflow-hidden"
+                - if post.image.attached?
+                  = image_tag post.image, class: "w-full h-full object-cover"
+                - else
+                  .flex.items-center.justify-center.w-full.h-full.text-slate-400.text-sm
+                    | No Image
+
+              / ▼ テキスト
+              .p-4.flex-1.flex.flex-col
+                h2.text-lg.font-semibold.text-slate-900.group-hover:text-violet-700.transition-colors
+                  = post.title
+
+                p.mt-2.text-sm.text-slate-700
+                  = truncate(post.caption, length: 80)
+
+                p.mt-3.text-xs.text-slate-500.mt-auto
+                  | 投稿日:
+                  = l post.created_at, format: :short
     - else
       p.text-slate-500 投稿がまだありません。
 
     - if user_signed_in?
       .mt-6
-        = link_to "新規投稿", new_post_path, class: "inline-block px-4 py-2 bg-violet-700 text-white rounded-md hover:bg-violet-800"
+        = link_to "新規投稿", new_post_path, class: "inline-block px-4 py-2 bg-violet-700 text-white rounded-md hover:bg-violet-800 text-sm"
