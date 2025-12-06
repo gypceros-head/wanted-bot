@@ -1,0 +1,19 @@
+.main-container
+  .container.mx-auto.px-4.py-8
+    h1.text-2xl.font-bold.mb-4 投稿一覧（仮）
+
+    - if @posts.present?
+      ul.space-y-4
+        - @posts.each do |post|
+          li.border.rounded-lg.p-4.bg-white
+            h2.text-xl.font-semibold = link_to post.title, post_path(post), class: "text-violet-700 hover:underline"
+            p.text-sm.text-slate-500.mt-1
+              | 投稿日:
+              = l post.created_at, format: :short
+            p.mt-2.text-slate-700.line-clamp-2 = truncate(post.caption, length: 80)
+    - else
+      p.text-slate-500 投稿がまだありません。
+
+    - if user_signed_in?
+      .mt-6
+        = link_to "新規投稿", new_post_path, class: "inline-block px-4 py-2 bg-violet-700 text-white rounded-md hover:bg-violet-800"

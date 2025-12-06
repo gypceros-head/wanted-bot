@@ -1,0 +1,35 @@
+.main-container
+  .container.mx-auto.px-4.py-8
+    - if @post
+      h1.text-2xl.font-bold.mb-4 = @post.title
+
+      p.text-sm.text-slate-500.mb-2
+        | 投稿日:
+        = l @post.created_at, format: :short
+        - if @post.created_at != @post.updated_at
+          span.ml-2
+            | （最終更新:
+            = l @post.updated_at, format: :short
+            | ）
+
+      - if @post.image.attached?
+        .mb-4
+          = image_tag @post.image, class: "max-w-full rounded-lg border"
+
+      p.text-slate-700.whitespace-pre-wrap = @post.caption
+
+      .mt-6.flex.flex-wrap.items-center.gap-4
+        = link_to "一覧に戻る", posts_path, class: "text-violet-700 hover:underline text-sm"
+
+        - if user_signed_in? && @post.user == current_user
+          = link_to "編集",
+                    edit_post_path(@post),
+                    class: "text-slate-700 hover:underline text-sm"
+
+          = button_to "投稿を削除する",
+                      post_path(@post),
+                      method: :delete,
+                      data: { turbo_confirm: "この投稿を削除しますか？（元に戻せません）" },
+                      class: "inline-flex items-center px-3 py-1 rounded-md border border-red-300 text-xs text-red-700 bg-red-50 hover:bg-red-100"
+    - else
+      p.text-red-600 投稿が見つかりませんでした。
