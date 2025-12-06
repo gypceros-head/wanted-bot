@@ -4,17 +4,16 @@
 
     - if @posts.present?
       / カードのグリッドレイアウト
-      .grid.grid-cols-1.md:grid-cols-2.lg:grid-cols-3.gap-6
+      .grid.grid-cols-1.md:grid-cols-3.lg:grid-cols-5.gap-6
         - @posts.each do |post|
           = link_to post_path(post), class: "block group" do
             .bg-white.rounded-xl.shadow-sm.border.border-slate-200.overflow-hidden.flex.flex-col.h-full
               / ▼ サムネイル
-              div class="relative w-full aspect-[3/4] bg-slate-100 overflow-hidden"
+              div class="relative w-full bg-slate-100 overflow-hidden"
                 - if post.image.attached?
-                  = image_tag post.image, class: "w-full h-full object-cover"
+                  = image_tag post.image, class: "w-full h-auto block"
                 - else
-                  .flex.items-center.justify-center.w-full.h-full.text-slate-400.text-sm
-                    | No Image
+                  = image_tag "no_image.png", class: "w-full h-auto block opacity-70"
 
               / ▼ テキスト
               .p-4.flex-1.flex.flex-col
