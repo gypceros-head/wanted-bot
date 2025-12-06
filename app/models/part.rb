@@ -22,7 +22,7 @@ class Part < ApplicationRecord
     eye:       "eye",        # 目
     mouth:     "mouth",      # 口
     antenna:   "antenna",    # アンテナ
-    accessory: "accessory",  # その他
+    accessory: "accessory"  # その他
   }, _prefix: true
 
   validates :category, presence: true
