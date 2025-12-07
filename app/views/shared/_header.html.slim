@@ -11,11 +11,7 @@ header.bg-violet-700.text-white.shadow
     / 右側：ナビゲーション
     .flex.items-center.space-x-4.text-sm
 
-      / ===== 投稿一覧リンク・コメントアウト =====
-      / = link_to "投稿一覧", posts_path, class: "hover:underline"
-
-      / ===== 仮リンク（rootへ） =====
-      = link_to "投稿一覧（仮）", root_path, class: "hover:underline"
+      = link_to "投稿一覧（仮）", posts_path, class: "hover:underline"
 
       - if user_signed_in?
 

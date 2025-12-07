@@ -1,0 +1,105 @@
+- breadcrumb :post, @post
+
+.main-container
+  .container.mx-auto.px-4.py-8
+    - if @post
+      .grid.grid-cols-1.lg:grid-cols-2.gap-8.items-start
+        / =======================
+        / 左カラム：画像エリア
+        / =======================
+        .bg-slate-50.rounded-xl.border.border-slate-200.p-4.flex.justify-center
+          - if @post.image.attached?
+            .max-w-full
+              = image_tag @post.image, class: "max-h-[600px] w-auto h-auto rounded-lg border border-slate-200"
+
+              .mt-4
+                = link_to "画像をダウンロード",
+                          url_for(@post.image),
+                          download: true,
+                          class: "inline-flex items-center px-4 py-2 rounded-md border border-slate-300 text-sm text-slate-700 bg-white hover:bg-slate-50"
+          - else
+            .flex.items-center.justify-center.w-full.h-64.text-slate-400.text-sm
+              | 画像が登録されていません
+
+        / =======================
+        / 右カラム：上＝作品情報 / 下＝コメント
+        / =======================
+        .flex.flex-col.h-full.gap-6
+          / ---- 上：タイトル・メタ情報・キャプション・操作 ----
+          .flex-1.flex.flex-col.gap-4
+            / タイトル
+            h1.text-2xl.font-bold = @post.title
+
+            / キャプション
+            - if @post.caption.present?
+              p.mt-3.text-slate-700.whitespace-pre-wrap.text-sm = @post.caption
+
+            / メタ情報
+            .space-y-2.text-sm.text-slate-500
+              p
+                | 投稿日:
+                = l @post.created_at, format: :short
+                - if @post.created_at != @post.updated_at
+                  span.ml-2
+                    | （最終更新:
+                    = l @post.updated_at, format: :short
+                    | ）
+
+              p
+                | 投稿者:
+                = @post.user.name
+
+              - if user_signed_in? && @post.user == current_user
+                p.inline-flex.items-center.text-xs.font-medium.rounded-full.px-3.py-1.bg-emerald-50.text-emerald-700
+                  - if @post.is_published?
+                    | 公開中
+                  - else
+                    | 非公開（自分にのみ表示）
+
+            / 操作ボタン群
+            .mt-4.flex.flex-wrap.gap-3
+              - if user_signed_in?
+                / ★ ブックマークボタンなど今後ここに追加
+                - if @post.user == current_user
+                  = link_to "編集",
+                            edit_post_path(@post),
+                            class: "inline-flex.items-center.px-3.py-2.rounded-md.border.border-slate-300.text-xs.text-slate-700.bg-white.hover:bg-slate-50"
+
+                  = button_to "投稿を削除する",
+                              post_path(@post),
+                              method: :delete,
+                              data: { turbo_confirm: "この投稿を削除しますか？（元に戻せません）" },
+                              class: "inline-flex.items-center.px-3.py-2.rounded-md.border.border-red-300.text-xs.text-red-700.bg-red-50.hover:bg-red-100"
+
+          / ---- 下：コメントエリア（右下の小ウィンドウでスクロール）----
+          .mt-2
+            h2.text-base.font-semibold.text-slate-900.mb-2 コメント
+
+            / コメント一覧（今は仮、スクロール可能ウィンドウ）
+            .rounded-lg.border.border-slate-200.bg-white.p-3.text-sm.text-slate-700.h-64.overflow-y-auto.space-y-3
+              / TODO: 後で @post.comments.each に差し替え
+              - 5.times do |i|
+                .border-b.border-slate-100.pb-2.last:border-none
+                  p.font-semibold.text-xs.text-slate-500
+                    | ユーザー名（仮）・#{i + 1}件目のコメント
+                  p.text-xs.mt-1
+                    | コメント機能は現在準備中です。ここに実際のコメント本文が表示されます。
+
+            / コメント投稿フォーム（仮・無効）
+            - if user_signed_in?
+              .mt-3.rounded-lg.border.border-slate-200.bg-slate-50.p-3
+                h3.text-xs.font-semibold.text-slate-900.mb-2 コメントを投稿（仮）
+                textarea.w-full.rounded-md.border.border-slate-300.bg-slate-100.p-2.text-xs[rows="3" disabled]
+                  | コメント入力エリア（未実装）
+
+                button.mt-2.inline-flex.items-center.px-3.py-1.rounded-md.bg-slate-300.text-[11px].text-white.cursor-not-allowed[type="button" disabled]
+                  | コメント機能は現在準備中です
+            - else
+              p.text-xs.text-slate-500.mt-2
+                | コメントをするにはログインが必要です。
+                = link_to "ログイン",
+                          new_user_session_path,
+                          class: "ml-1.text-violet-700.hover:underline"
+
+    - else
+      p.text-red-600 投稿が見つかりませんでした。

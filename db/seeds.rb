@@ -1,9 +1,32 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
-#
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
+# テストユーザーを作成（既にいればそれを使う）
+user = User.find_by(email: "test@example.com")
+
+unless user
+  user = User.create!(
+    name: "テストユーザー",
+    email: "test@example.com",
+    password: "password",
+    password_confirmation: "password"
+  )
+  puts "Test user created: #{user.email}"
+else
+  puts "Test user already exists: #{user.email}"
+end
+
+# テスト投稿を複数作成
+if Post.count == 0
+  3.times do |i|
+    Post.create!(
+      user: user,
+      title: "テスト投稿 #{i + 1}",
+      caption: <<~CAPTION,
+        これはテスト投稿 #{i + 1} です。
+        動作確認用のダミーキャプションです。
+      CAPTION
+      is_published: true
+    )
+  end
+  puts "Test posts created."
+else
+  puts "Posts already exist. Skip creating test posts."
+end

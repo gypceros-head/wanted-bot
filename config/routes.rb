@@ -1,4 +1,8 @@
 Rails.application.routes.draw do
+  get "posts/index"
+  get "posts/show"
+  get "posts/new"
+  get "posts/edit"
   devise_for :users
   get "home/index"
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
@@ -14,5 +18,9 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   root "home#index"
 
-  resources :posts
+  resources :posts do
+    member do
+      delete :destroy_image  # ← 画像だけ削除する専用アクション
+    end
+  end
 end
