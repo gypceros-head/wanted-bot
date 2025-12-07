@@ -24,6 +24,11 @@ html
     .container.mx-auto.px-4.py-4
       = render "shared/flash"
 
+    / ▼ パンくず
+    .container.mx-auto.px-4
+      = breadcrumbs separator: " › ",
+                  class: "breadcrumbs text-xs text-slate-500 my-1"
+
     main.flex-1
       .container.mx-auto.px-4.py-6
         = yield
