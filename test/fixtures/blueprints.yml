@@ -10,7 +10,7 @@
 #  paper_color     :string           default("#f8f0d8"), not null
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
-#  post_id         :bigint           not null
+#  post_id         :bigint
 #
 # Indexes
 #

@@ -10,7 +10,7 @@
 #  paper_color     :string           default("#f8f0d8"), not null
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
-#  post_id         :bigint           not null
+#  post_id         :bigint
 #
 # Indexes
 #
@@ -21,7 +21,7 @@
 #  fk_rails_...  (post_id => posts.id)
 #
 class Blueprint < ApplicationRecord
-  belongs_to :post
+  belongs_to :post, optional: true
 
   has_many :assemblies, dependent: :destroy
   has_many :parts, through: :assemblies

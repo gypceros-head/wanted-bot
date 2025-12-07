@@ -9,7 +9,7 @@
 #  rotation_deg :float            not null
 #  scale_x      :float            not null
 #  scale_y      :float            not null
-#  tone_code    :integer          default(2), not null
+#  tone_code    :integer          default("neutral"), not null
 #  created_at   :datetime         not null
 #  updated_at   :datetime         not null
 #  blueprint_id :bigint           not null
