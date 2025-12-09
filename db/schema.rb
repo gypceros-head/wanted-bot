@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_12_06_135437) do
+ActiveRecord::Schema[7.2].define(version: 2025_12_07_091637) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -53,16 +53,21 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_06_135437) do
     t.float "rotation_deg", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "tone_code", default: 2, null: false
     t.index ["blueprint_id"], name: "index_assemblies_on_blueprint_id"
     t.index ["part_id"], name: "index_assemblies_on_part_id"
+    t.index ["tone_code"], name: "index_assemblies_on_tone_code"
   end
 
   create_table "blueprints", force: :cascade do |t|
-    t.bigint "post_id", null: false
+    t.bigint "post_id"
     t.string "name", null: false
     t.jsonb "editor_state", default: {}, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "light_ink_color", default: "#cc3333", null: false
+    t.string "dark_ink_color", default: "#222222", null: false
+    t.string "paper_color", default: "#f8f0d8", null: false
     t.index ["post_id"], name: "index_blueprints_on_post_id"
   end
 
@@ -92,6 +97,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_06_135437) do
     t.string "asset_path", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "default_tone_code", default: 2, null: false
     t.index ["category"], name: "index_parts_on_category"
   end
 

@@ -23,4 +23,6 @@ Rails.application.routes.draw do
       delete :destroy_image  # ← 画像だけ削除する専用アクション
     end
   end
+
+  resources :blueprints, only: %i[new create edit update show]
 end
