@@ -1,4 +1,3 @@
-/ app/views/blueprints/_form.html.slim
 - blueprint = local_assigns[:blueprint]
 
 / Stimulus: editor--canvas コントローラに submit を紐づけ
@@ -42,25 +41,58 @@
   / ─────────────────────────────
   .grid.grid-cols-1.xl:grid-cols-3.gap-4
 
-    / ── 左カラム：パーツリスト（ダミー） ──
-    .space-y-4.bg-white.rounded-lg.shadow-sm.p-3
+    / ── 左カラム：パーツリスト ──
+    .space-y-4.bg-white.shadow-sm.p-3[data-controller="editor--palette"]
       h2.text-sm.font-semibold.text-gray-700.mb-2 パーツ一覧
 
-      / カテゴリタブ（ダミー）
-      .flex.flex-wrap.gap-2.mb-3
-        - %w[輪郭 目 口 アンテナ アクセサリ].each_with_index do |label, idx|
-          span.inline-flex.items-center.justify-center.rounded-full.px-3.py-1.text-xs.cursor-pointer class=(idx.zero? ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200")
-            = label
+      - categories = @parts_by_category.keys.sort
+      - active_category = categories.first
 
-      / パーツリスト（ダミー）
-      .max-h-[420px].overflow-y-auto.pr-1.space-y-2
-        .flex.items-center.gap-2.p-2.rounded.border.border-gray-200.hover:bg-gray-50.cursor-pointer
-          .w-10.h-10.bg-gray-200.rounded
-          .flex-1
-            p.text-xs.font-semibold.text-gray-800
-              | パーツ名 1
-            p.text-[11px].text-gray-500
-              | カテゴリ: 目 / default tone: primary_tint
+      / カテゴリタブ（横スクロール＋左右矢印）
+      .flex.items-center.gap-2.mb-3
+        / 左矢印（scrollLeft）
+        button type="button" class="px-2 py-1 border text-xs text-gray-500 hover:bg-gray-50" data-action="click->editor--palette#scrollLeft"
+          | ◁
+
+        / 横スクロール可能なタブコンテナ
+        .flex-1.overflow-x-auto.no-scrollbar[data-editor--palette-target="scrollContainer"]
+          .inline-flex.gap-1
+            - categories.each do |category|
+              - is_active = (category == active_category)
+              - btn_class = is_active \
+                ? "px-3 py-1 border text-xs bg-slate-800 text-white whitespace-nowrap" \
+                : "px-3 py-1 border text-xs bg-white text-gray-700 hover:bg-gray-100 whitespace-nowrap"
+
+              button type="button" class=btn_class data-category=category data-editor--palette-target="tab" data-action="click->editor--palette#select"
+                = category
+
+        / 右矢印（scrollRight）
+        button type="button" class="px-2 py-1 border text-xs text-gray-500 hover:bg-gray-50" data-action="click->editor--palette#scrollRight"
+          | ▷
+
+      / パーツリスト本体（カテゴリごとにパネル化）
+      div class="max-h-[420px] overflow-y-auto pr-1"
+        - categories.each do |category|
+          - parts = @parts_by_category[category]
+          - next if parts.blank?
+
+          - is_active_panel = (category == active_category)
+          - panel_class = is_active_panel ? "space-y-2" : "space-y-2 hidden"
+
+          / 各カテゴリのパネル（最初以外は hidden で非表示）
+          div class=panel_class data-editor--palette-target="panel" data-category=category
+            / サムネイルグリッド（横4列・中央寄せ）
+            .flex.justify-center
+              .grid.grid-cols-4.gap-2
+                - parts.each do |part|
+                  button type="button" class="relative w-24 h-24 border border-gray-300 bg-white hover:bg-gray-50 flex items-center justify-center p-2" data-part-id=part.id data-part-asset-path=part.asset_path title=part.name
+                    = inline_svg_tag part.asset_path,
+                                      aria: { hidden: true },
+                                      class: "max-w-full max-h-full object-contain svg-part-thumb"
+
+
+
+
 
     / ── 中央カラム：キャンバス ──
     .flex.flex-col.items-center
@@ -95,7 +127,7 @@
         p.text-xs.text-gray-500.mb-2
           | キャンバス上のパーツをクリックすると、ここに詳細が表示されます。
 
-        dl.grid.grid-cols-2.gap-x-3.gap-y-1.text-[11px].text-gray-700
+        dl class="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-gray-700"
           dt.text-gray-500 部位
           dd.font-semibold 目
 
@@ -116,11 +148,11 @@
 
       / ロック系トグル（将来ここに Stimulus action をつける）
       .mt-3.flex.flex-wrap.gap-2
-        button type="button" class="px-2 py-1 rounded border text-[11px] border-gray-300 hover:bg-gray-100"
+        button type="button" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100 text-[11px]"
           | 移動ロック
-        button type="button" class="px-2 py-1 rounded border text-[11px] border-gray-300 hover:bg-gray-100"
+        button type="button" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100 text-[11px]"
           | 拡大ロック
-        button type="button" class="px-2 py-1 rounded border text-[11px] border-gray-300 hover:bg-gray-100"
+        button type="button" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100 text-[11px]"
           | 回転ロック
 
       / レイヤー一覧（ダミー）
@@ -128,17 +160,17 @@
         h2.text-sm.font-semibold.text-gray-700.mb-2 レイヤー
 
         / レイヤー操作の共通操作（ダミー）
-        .flex.justify-between.items-center.mb-2.text-[11px].text-gray-600
+        div class="flex justify-between items-center mb-2 text-[11px] text-gray-600"
           span
             | レイヤー順を入れ替えたり、非表示設定ができます。
           .flex.gap-1
-            button.type="button" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100"
+            button type="button" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100"
               | すべて表示
-            button.type="button" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100"
+            button type="button" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100"
               | すべてロック
 
         / レイヤー一覧（ダミー 3件）
-        .space-y-1.text-[11px]
+        div class="space-y-1 text-[11px]"
           - [["輪郭", "contour"], ["目", "eye"], ["口", "mouth"]].each_with_index do |(label, key), index|
             .flex.items-center.gap-2.p-2.rounded.border.border-gray-200.bg-white.hover:bg-gray-50.cursor-pointer
               / 可視 / 非表示トグル（ダミー）

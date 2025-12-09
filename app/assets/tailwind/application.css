@@ -1,1 +1,16 @@
 @import "tailwindcss";
+
+/* タブ用: スクロールは生かしたままバーだけ消す */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE, Edge 用 */
+  scrollbar-width: none;     /* Firefox 用 */
+}
+
+/* パーツサムネイル用: 中のベクターパスの塗りを #888 に統一する */
+.svg-part-thumb * {
+  fill: #888888 !important;
+}

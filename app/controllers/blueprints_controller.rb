@@ -1,5 +1,6 @@
 class BlueprintsController < ApplicationController
   before_action :set_blueprint, only: %i[show edit update]
+  before_action :set_parts,     only: %i[new edit]
 
   # TODO: 認証が整ったら authenticate_user! もここに入れる
   # before_action :authenticate_user!
@@ -45,6 +46,12 @@ class BlueprintsController < ApplicationController
 
   def set_blueprint
     @blueprint = Blueprint.find(params[:id])
+  end
+
+  def set_parts
+    # Part をカテゴリ順・名前順で並べつつ、カテゴリごとにグループ化
+    @parts_by_category = Part.order(:category, :name).group_by(&:category)
+    # 例: { "eye" => [#<Part ...>, ...], "mouth" => [...], ... }
   end
 
   # editor_state は hidden_field から JSON 文字列で飛んでくる想定なので、

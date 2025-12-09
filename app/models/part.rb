@@ -18,21 +18,63 @@ class Part < ApplicationRecord
   has_many :assemblies, dependent: :destroy
   has_many :blueprints, through: :assemblies
 
-  enum category: {
-    contour:   "contour",    # 輪郭
-    eye:       "eye",        # 目
-    mouth:     "mouth",      # 口
-    antenna:   "antenna",    # アンテナ
-    accessory: "accessory"  # その他
-  }, _prefix: true
+  enum :category, {
+    head_base: "head_base",
+    helmet:    "helmet",
+    goggle:    "goggle",
+    eye:       "eye",
+    nose:      "nose",
+    mask:      "mask",
+    mouth:     "mouth",
+    chin:      "chin",
+    accessory: "accessory",
+    basic:    "basic"
+  }, prefix: true
 
-  enum default_tone_code: {
+    CATEGORY_MAP = {
+    "helmet"    => "helmet",
+    "goggle"    => "goggle",
+    "eye"       => "eye",
+    "nose"      => "nose",
+    "mask"      => "mask",
+    "mouth"     => "mouth",
+    "chin"      => "chin",
+    "head_base" => "head_base",
+    "accessory" => "accessory",
+    "basic"     => "basic",
+
+    "eyes"       => "eye",
+    "mouths"     => "mouth",
+    "helmets"    => "helmet",
+    "goggles"    => "goggle",
+    "acc"        => "accessory",
+    "basics"     => "basic",
+  }.freeze
+
+    CATEGORY_LABELS = {
+    "helmet"    => "ヘルメット",
+    "goggle"    => "ゴーグル",
+    "eye"       => "目",
+    "nose"      => "鼻",
+    "mask"      => "マスク",
+    "mouth"     => "口",
+    "chin"      => "あご",
+    "head_base" => "頭ベース",
+    "accessory" => "アクセサリ",
+    "basic"    => "基本図形"
+  }.freeze
+
+  def category_label
+    CATEGORY_LABELS[category] || category
+  end
+
+  enum :default_tone_code, {
     primary_full:   0, # 赤
     primary_tint:   1, # 赤 + 白
     neutral:        2, # 白
     secondary_tint: 3, # 白 + 黒
     secondary_full: 4  # 黒
-  }, _prefix: true
+  }, prefix: true
 
   validates :category, presence: true
   validates :name, presence: true
