@@ -37,6 +37,8 @@ gem "bootsnap", require: false
 gem "image_processing", "~> 1.2"
 gem "mini_magick"
 
+gem "inline_svg"
+
 # 認証
 gem "devise"
 
