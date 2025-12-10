@@ -160,36 +160,39 @@
         button type="button" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100 text-[11px]"
           | 回転ロック
 
-      / レイヤー一覧（ダミー）
+      / レイヤー一覧（実データ）
+      - assemblies = blueprint.assemblies.includes(:part).order(:layer_order)
       .bg-white.rounded-lg.shadow-sm.p-3
         h2.text-sm.font-semibold.text-gray-700.mb-2 レイヤー
 
-        / レイヤー操作の共通操作（ダミー）
-        div class="flex justify-between items-center mb-2 text-[11px] text-gray-600"
-          span
-            | レイヤー順を入れ替えたり、非表示設定ができます。
-          .flex.gap-1
-            button type="button" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100"
-              | すべて表示
-            button type="button" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100"
-              | すべてロック
+        - if assemblies.empty?
+          p.text-xs.text-gray-500
+            | まだ保存されたパーツがありません。「保存する」とキャンバス上のパーツがレイヤーとして表示されます。
+        - else
+          .flex.justify-between.items-center.mb-2
+            span.text-[11px].text-gray-600 レイヤー順やパーツ情報の一覧です（操作UIは今後追加予定）。
+            
+            .flex.gap-1
+              button type="button" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100"
+                | すべて表示
+              button type="button" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100"
+                | すべてロック
 
-        / レイヤー一覧（ダミー 3件）
-        div class="space-y-1 text-[11px]"
-          - [["輪郭", "contour"], ["目", "eye"], ["口", "mouth"]].each_with_index do |(label, key), index|
-            .flex.items-center.gap-2.p-2.rounded.border.border-gray-200.bg-white.hover:bg-gray-50.cursor-pointer
-              / 可視 / 非表示トグル（ダミー）
-              input type="checkbox" checked=true class="h-3 w-3 text-blue-600 rounded border-gray-300"
+          .space-y-1.text-[11px]
+            - assemblies.each do |assembly|
+              - part = assembly.part
+              .flex.items-center.gap-2.p-2.rounded.border.border-gray-200.bg-white.hover:bg-gray-50.cursor-pointer data-controller="editor--layers" data-editor--layers-index-value=assembly.layer_order data-action="click->editor--layers#select"
+                / 可視 / 非表示トグル
+                input type="checkbox" checked=true class="h-3 w-3 text-blue-600 rounded border-gray-300" data-editor--layers-target="visibilityToggle" data-action="click->editor--layers#toggleVisibility"
 
-              .flex-1
-                p.font-semibold.text-gray-800
-                  = "#{label} レイヤー #{index + 1}"
-                p.text-gray-500
-                  | part_id: ##{index + 1} / tone: secondary_full
+                .flex-1
+                  p.font-semibold.text-gray-800
+                    = "レイヤー #{assembly.layer_order + 1}：#{part&.category.presence || 'unknown'} / #{part&.name.presence || "Part ##{assembly.part_id}"}"
+                  p.text-gray-500
+                    = "part_id: ##{assembly.part_id} / tone: #{assembly.tone_code.presence || 'neutral'}"
 
-              / 上下移動ボタン（ダミー）
-              .flex.flex-col.gap-1
-                button type="button" class="px-1 py-0.5 rounded border border-gray-300 hover:bg-gray-100"
-                  | ▲
-                button type="button" class="px-1 py-0.5 rounded border border-gray-300 hover:bg-gray-100"
-                  | ▼
+                .flex.flex-col.gap-1
+                  button type="button" class="px-1 py-0.5 rounded border border-gray-300 hover:bg-gray-100" data-action="click->editor--layers#moveUp"
+                    | ▲
+                  button type="button" class="px-1 py-0.5 rounded border border-gray-300 hover:bg-gray-100" data-action="click->editor--layers#moveDown"
+                    | ▼
