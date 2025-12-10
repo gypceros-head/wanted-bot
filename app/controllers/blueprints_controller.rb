@@ -1,6 +1,6 @@
 class BlueprintsController < ApplicationController
   before_action :set_blueprint, only: %i[show edit update]
-  before_action :set_parts,     only: %i[new edit]
+  before_action :set_parts,     only: %i[new edit create update]
 
   # TODO: 認証が整ったら authenticate_user! もここに入れる
   # before_action :authenticate_user!
@@ -18,6 +18,7 @@ class BlueprintsController < ApplicationController
     assign_editor_state_from_param(@blueprint)
 
     if @blueprint.save
+      @blueprint.sync_assemblies_from_editor_state!
       redirect_to edit_blueprint_path(@blueprint), notice: "設計図を作成しました"
     else
       render :new, status: :unprocessable_entity
@@ -36,6 +37,7 @@ class BlueprintsController < ApplicationController
     assign_editor_state_from_param(@blueprint)
 
     if @blueprint.save
+      @blueprint.sync_assemblies_from_editor_state!
       redirect_to @blueprint, notice: "設計図を更新しました"
     else
       render :edit, status: :unprocessable_entity
@@ -72,8 +74,14 @@ class BlueprintsController < ApplicationController
     raw = blueprint.editor_state
     return if raw.blank? || raw.is_a?(Hash)
 
-    blueprint.editor_state = JSON.parse(raw) rescue {}
+    begin
+      blueprint.editor_state = JSON.parse(raw)
+    rescue JSON::ParserError => e
+      Rails.logger.warn("[BlueprintsController] editor_state JSON parse error: #{e.message}")
+      blueprint.editor_state = {}
+    end
   end
+
 
   # 新規作成時のデフォルト状態（空のキャンバス）
   def default_editor_state

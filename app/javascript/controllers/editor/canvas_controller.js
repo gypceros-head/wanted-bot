@@ -197,25 +197,32 @@ export default class extends Controller {
     const centerX = canvasWidth / 2;
     const centerY = canvasHeight / 2;
 
+    // ★ 位置情報＋メタ情報をすべて set でまとめて設定
     img.set({
       originX: "center",
       originY: "center",
       left: centerX,
-      top: centerY
-    });
+      top: centerY,
 
-    // Assemblies 生成などで使うメタ情報
-    img.data = {
-      partId: meta.partId ? Number(meta.partId) : null,
-      partName: meta.name,
-      category: meta.category,
-      toneCode: "neutral"
-    };
+      // メタ情報（toJSON で拾いたいもの）
+      partId:       meta.partId ? Number(meta.partId) : null,
+      partName:     meta.name,
+      partCategory: meta.category,
+      toneCode:     "neutral"
+    });
 
     img.setCoords();
     canvas.add(img);
     canvas.setActiveObject(img);
     canvas.requestRenderAll();
+
+    // デバッグ用ログ（ちゃんと載っているか確認）
+    console.log("[editor--canvas] inserted image meta", {
+      partId: img.partId,
+      partName: img.partName,
+      partCategory: img.partCategory,
+      toneCode: img.toneCode
+    });
   }
 
   // ===== デフォルトオブジェクト =====
@@ -245,22 +252,54 @@ export default class extends Controller {
     console.log("[editor--canvas] addDebugRectAtCenter added");
   }
 
-  // ===== フォーム送信 =====
-
+  // フォーム送信時
   handleSubmit(event) {
-    const json = this.fabricCanvas.toJSON();
-    console.log("[editor--canvas] handleSubmit", json);
+    const canvas = this.fabricCanvas;
 
+    // 1. Fabric 標準の JSON（見た目の再現用）
+    const fabricJson = canvas.toJSON();
+    console.log("[editor--canvas] handleSubmit fabricJson", fabricJson);
+
+    // 2. Assemblies 用のメタ情報を自前で組み立てる
+    const metaObjects = canvas.getObjects().map((obj, index) => {
+      // Fabric.Image / Rect など共通で使えるプロパティだけ拾う
+      return {
+        index,                             // レイヤー順のベース
+        type: obj.type || null,
+        left: obj.left ?? 0,
+        top: obj.top ?? 0,
+        scaleX: obj.scaleX ?? 1,
+        scaleY: obj.scaleY ?? 1,
+        angle: obj.angle ?? 0,
+        flipX: obj.flipX ?? false,
+        flipY: obj.flipY ?? false,
+
+        // insertImageToCenter で付けたメタ情報
+        partId: obj.partId ?? null,
+        partName: obj.partName ?? null,
+        partCategory: obj.partCategory ?? null,
+        toneCode: obj.toneCode ?? "neutral"
+      };
+    });
+
+    const json = {
+      ...fabricJson,
+      meta: metaObjects
+    };
+
+    console.log("[editor--canvas] handleSubmit combined json", json);
+
+    // 3. hidden_field に書き戻し
     if (this.hasStateFieldTarget) {
       this.stateFieldTarget.value = JSON.stringify(json);
     }
 
+    // 4. 設計図名の入力は従来どおり
     if (this.hasNameFieldTarget) {
       const currentName = this.nameFieldTarget.value || "新しい手配書";
       const newName = window.prompt("設計図の名前を入力してください", currentName);
 
       if (newName === null) {
-        // キャンセルされた場合は送信中止
         event.preventDefault();
         return;
       }
