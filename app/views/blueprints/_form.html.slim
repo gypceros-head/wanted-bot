@@ -85,14 +85,19 @@
             .flex.justify-center
               .grid.grid-cols-4.gap-2
                 - parts.each do |part|
-                  button type="button" class="relative w-24 h-24 border border-gray-300 bg-white hover:bg-gray-50 flex items-center justify-center p-2" data-part-id=part.id data-part-asset-path=part.asset_path title=part.name
-                    = inline_svg_tag part.asset_path,
-                                      aria: { hidden: true },
-                                      class: "max-w-full max-h-full object-contain svg-part-thumb"
-
-
-
-
+                  button(
+                    type="button"
+                    class="relative w-24 h-24 border border-gray-300 bg-white hover:bg-gray-50 flex items-center justify-center"
+                    data-part-id=part.id
+                    data-part-asset-url=asset_path(part.asset_path)
+                    data-part-category=category
+                    title=part.name
+                    data-action="click->editor--palette#insert"
+                  )
+                    .w-5/6.h-5/6.flex.items-center.justify-center
+                      = inline_svg_tag part.asset_path,
+                        aria: { hidden: true },
+                        class: "w-full h-full svg-part-thumb"
 
     / ── 中央カラム：キャンバス ──
     .flex.flex-col.items-center
@@ -103,7 +108,7 @@
           data-editor--canvas-paper-color-value=blueprint.paper_color
           width="480"
           height="640"
-          class="border border-gray-300 shadow-sm bg-white"
+          class="border border-gray-300 shadow-sm"
         ]
 
       / キャンバス下に簡易ステータス（ダミー）
