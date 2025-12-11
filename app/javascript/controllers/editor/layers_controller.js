@@ -8,6 +8,7 @@ export default class extends Controller {
 
   static targets = ["list", "visibilityToggle"];
 
+  // ===== ライフサイクル =====
   connect() {
     // listTarget を持っていれば「パネル用インスタンス」
     this.isPanel = this.hasListTarget;
@@ -38,9 +39,19 @@ export default class extends Controller {
     }
   }
 
+  // ===== 共通ユーティリティ =====
+
+  dispatchLayerEvent(name, detail) {
+    window.dispatchEvent(
+      new CustomEvent(`layers:${name}`, {
+        detail
+      })
+    );
+  }
+
   // ===== 行：選択 =====
   select(event) {
-    if (this.isPanel) return; // パネルでは何もしない
+    if (this.isPanel) return;
     event.preventDefault();
 
     const index = this.indexValue;
@@ -48,48 +59,30 @@ export default class extends Controller {
 
     console.log("[editor--layers] select", { index });
 
-    window.dispatchEvent(
-      new CustomEvent("layers:select", {
-        detail: { index }
-      })
-    );
+    this.dispatchLayerEvent("select", { index });
   }
 
-  // ===== 行：▲ボタン =====
+  // ===== 行：▲/▼ボタン =====
   moveUp(event) {
-    if (this.isPanel) return;
-    event.preventDefault();
-
-    const index = this.indexValue;
-    console.log("[editor--layers] moveUp", { index });
-
-    // 1. キャンバス側へ「レイヤーを上に動かして」と通知
-    window.dispatchEvent(
-      new CustomEvent("layers:move", {
-        detail: { index, direction: "up" }
-      })
-    );
-
-    // 2. 自分の行 DOM も 1 つ上へ移動
-    this.moveRowInDom("up");
+    this.move("up", event);
   }
 
   moveDown(event) {
+    this.move("down", event);
+  }
+
+  move(direction, event) {
     if (this.isPanel) return;
     event.preventDefault();
 
     const index = this.indexValue;
-    console.log("[editor--layers] moveDown", { index });
+    console.log("[editor--layers] move", { index, direction });
 
-    // 1. キャンバス側へ「レイヤーを下に動かして」と通知
-    window.dispatchEvent(
-      new CustomEvent("layers:move", {
-        detail: { index, direction: "down" }
-      })
-    );
+    // 1. キャンバス側へ「レイヤーを動かして」と通知
+    this.dispatchLayerEvent("move", { index, direction });
 
-    // 2. 自分の行 DOM も 1 つ下へ移動
-    this.moveRowInDom("down");
+    // 2. 自分の行 DOM も 1 つ上下に移動
+    this.moveRowInDom(direction);
   }
 
   // ===== 行 DOM の上下入れ替え =====
@@ -125,11 +118,7 @@ export default class extends Controller {
     const index = this.indexValue;
     console.log("[editor--layers] remove", { index });
 
-    window.dispatchEvent(
-      new CustomEvent("layers:remove", {
-        detail: { index }
-      })
-    );
+    this.dispatchLayerEvent("remove", { index });
 
     // DOM 上から自分の行を削除
     this.element.remove();
@@ -145,11 +134,7 @@ export default class extends Controller {
 
     console.log("[editor--layers] toggleVisible", { index, visible: checked });
 
-    window.dispatchEvent(
-      new CustomEvent("layers:toggleVisible", {
-        detail: { index, visible: checked }
-      })
-    );
+    this.dispatchLayerEvent("toggleVisible", { index, visible: checked });
   }
 
   // ===== 行：Canvas → レイヤー行のハイライト反映 =====
@@ -188,6 +173,20 @@ export default class extends Controller {
     }
 
     // 1. レイヤー行 DOM を構築
+    const row = this.buildRow(info);
+
+    // 2. 一番上に追加（「上 = 前面」）
+    this.listTarget.prepend(row);
+
+    // 3. Stimulus が新しい行の controller を connect したあとで、
+    //    改めて「この metaIndex をアクティブ」と通知する
+    setTimeout(() => {
+      this.dispatchLayerEvent("activeChanged", { index: info.index });
+    }, 0);
+  }
+
+  // パネル：行 DOM の組み立て
+  buildRow(info) {
     const row = document.createElement("div");
     row.className =
       "flex items-center gap-2 p-2 rounded border border-gray-200 bg-white hover:bg-gray-50 cursor-pointer";
@@ -228,17 +227,6 @@ export default class extends Controller {
       </button>
     `;
 
-    // 2. 一番上に追加（「上 = 前面」）
-    this.listTarget.prepend(row);
-
-    // 3. Stimulus が新しい行の controller を connect したあとで、
-    //    改めて「この metaIndex をアクティブ」と通知する
-    setTimeout(() => {
-      window.dispatchEvent(
-        new CustomEvent("layers:activeChanged", {
-          detail: { index: info.index }
-        })
-      );
-    }, 0);
+    return row;
   }
 }

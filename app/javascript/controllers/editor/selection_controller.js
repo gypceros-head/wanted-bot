@@ -23,12 +23,15 @@ function snapDownToGrid(value, step) {
 // 「上方向」スナップ: 既にグリッド上なら一つ上へ、それ以外は次のグリッドへ
 function snapUpToGrid(value, step) {
   const k = Math.floor(value / step);
-  const base = k * step;
+  const snapped = k * step;
 
-  if (Math.abs(value - base) < EPS) {
-    return base + step;
+  if (Math.abs(value - snapped) < EPS) {
+    // ちょうどグリッド上 → さらに一つ上
+    return snapped + step;
+  } else {
+    // それ以外 → 次のグリッド
+    return (k + 1) * step;
   }
-  return (k + 1) * step;
 }
 
 // Connects to data-controller="editor--selection"
@@ -45,6 +48,9 @@ export default class extends Controller {
     "scaleYInput"
   ];
 
+  // ==========================
+  // ライフサイクル
+  // ==========================
   connect() {
     console.log("[editor--selection] connect");
 
@@ -70,6 +76,13 @@ export default class extends Controller {
 
   disconnect() {
     window.removeEventListener("selection:changed", this.handleSelectionChanged);
+  }
+
+  // ==========================
+  // 内部 state ユーティリティ
+  // ==========================
+  hasSelection() {
+    return this.current && this.current.index !== null;
   }
 
   // ==========================
@@ -102,6 +115,9 @@ export default class extends Controller {
     this.updateUIFromState();
   }
 
+  // ==========================
+  // 表示状態の切り替え
+  // ==========================
   // 未選択状態表示
   showEmptyState() {
     if (this.hasEmptyMessageTarget) {
@@ -157,28 +173,41 @@ export default class extends Controller {
   }
 
   // ==========================
-  // X 座標
+  // X / Y 座標（スナップ付き）
   // ==========================
   incrementX(event) {
     event.preventDefault();
-    if (this.current.index === null) return;
-
-    const current = this.current.x || 0;
-    const next = snapUpToGrid(current, POSITION_SNAP);
-    this.applyTransform({ x: next });
+    this.adjustPosition("x", "up");
   }
 
   decrementX(event) {
     event.preventDefault();
-    if (this.current.index === null) return;
+    this.adjustPosition("x", "down");
+  }
 
-    const current = this.current.x || 0;
-    const next = snapDownToGrid(current, POSITION_SNAP);
-    this.applyTransform({ x: next });
+  incrementY(event) {
+    event.preventDefault();
+    this.adjustPosition("y", "up");
+  }
+
+  decrementY(event) {
+    event.preventDefault();
+    this.adjustPosition("y", "down");
+  }
+
+  // X/Y の共通処理
+  adjustPosition(axis, direction) {
+    if (!this.hasSelection()) return;
+
+    const current = this.current[axis] || 0;
+    const snapFn = direction === "up" ? snapUpToGrid : snapDownToGrid;
+    const next = snapFn(current, POSITION_SNAP);
+
+    this.applyTransform({ [axis]: next });
   }
 
   updateXFromInput() {
-    if (this.current.index === null) return;
+    if (!this.hasSelection()) return;
 
     const raw = parseFloat(this.xInputTarget.value);
     if (Number.isNaN(raw)) return;
@@ -186,29 +215,8 @@ export default class extends Controller {
     this.applyTransform({ x: raw });
   }
 
-  // ==========================
-  // Y 座標
-  // ==========================
-  incrementY(event) {
-    event.preventDefault();
-    if (this.current.index === null) return;
-
-    const current = this.current.y || 0;
-    const next = snapUpToGrid(current, POSITION_SNAP);
-    this.applyTransform({ y: next });
-  }
-
-  decrementY(event) {
-    event.preventDefault();
-    if (this.current.index === null) return;
-
-    const current = this.current.y || 0;
-    const next = snapDownToGrid(current, POSITION_SNAP);
-    this.applyTransform({ y: next });
-  }
-
   updateYFromInput() {
-    if (this.current.index === null) return;
+    if (!this.hasSelection()) return;
 
     const raw = parseFloat(this.yInputTarget.value);
     if (Number.isNaN(raw)) return;
@@ -221,7 +229,7 @@ export default class extends Controller {
   // ==========================
   incrementAngle(event) {
     event.preventDefault();
-    if (this.current.index === null) return;
+    if (!this.hasSelection()) return;
 
     const current = this.current.angle || 0;
     const next = snapUpToGrid(current, ANGLE_SNAP);
@@ -230,7 +238,7 @@ export default class extends Controller {
 
   decrementAngle(event) {
     event.preventDefault();
-    if (this.current.index === null) return;
+    if (!this.hasSelection()) return;
 
     const current = this.current.angle || 0;
     const next = snapDownToGrid(current, ANGLE_SNAP);
@@ -238,7 +246,7 @@ export default class extends Controller {
   }
 
   updateAngleFromInput() {
-    if (this.current.index === null) return;
+    if (!this.hasSelection()) return;
 
     let raw = parseFloat(this.angleInputTarget.value);
     if (Number.isNaN(raw)) return;
@@ -251,30 +259,42 @@ export default class extends Controller {
   }
 
   // ==========================
-  // 拡大率 X（%）
+  // 拡大率 X / Y（%）
   // ==========================
   incrementScaleX(event) {
     event.preventDefault();
-    if (this.current.index === null) return;
-
-    const currentPercent = Math.round((this.current.scaleX || 1) * 100);
-    const nextPercent = snapUpToGrid(currentPercent, SCALE_SNAP_PERCENT);
-    this.applyTransform({ scaleX: nextPercent / 100.0 });
+    this.adjustScale("scaleX", "up");
   }
 
   decrementScaleX(event) {
     event.preventDefault();
-    if (this.current.index === null) return;
+    this.adjustScale("scaleX", "down");
+  }
 
-    const currentPercent = Math.round((this.current.scaleX || 1) * 100);
-    const snapped = snapDownToGrid(currentPercent, SCALE_SNAP_PERCENT);
+  incrementScaleY(event) {
+    event.preventDefault();
+    this.adjustScale("scaleY", "up");
+  }
+
+  decrementScaleY(event) {
+    event.preventDefault();
+    this.adjustScale("scaleY", "down");
+  }
+
+  // scaleX/scaleY の共通処理
+  adjustScale(axis, direction) {
+    if (!this.hasSelection()) return;
+
+    const currentPercent = Math.round((this.current[axis] || 1) * 100);
+    const snapFn = direction === "up" ? snapUpToGrid : snapDownToGrid;
+    const snapped = snapFn(currentPercent, SCALE_SNAP_PERCENT);
     const nextPercent = Math.max(10, snapped); // ★ 下限 10%
 
-    this.applyTransform({ scaleX: nextPercent / 100.0 });
+    this.applyTransform({ [axis]: nextPercent / 100.0 });
   }
 
   updateScaleXFromInput() {
-    if (this.current.index === null) return;
+    if (!this.hasSelection()) return;
 
     let rawPercent = parseFloat(this.scaleXInputTarget.value);
     if (Number.isNaN(rawPercent)) return;
@@ -286,35 +306,13 @@ export default class extends Controller {
     this.applyTransform({ scaleX: rawPercent / 100.0 });
   }
 
-  // ==========================
-  // 拡大率 Y（%）
-  // ==========================
-  incrementScaleY(event) {
-    event.preventDefault();
-    if (this.current.index === null) return;
-
-    const currentPercent = Math.round((this.current.scaleY || 1) * 100);
-    const nextPercent = snapUpToGrid(currentPercent, SCALE_SNAP_PERCENT);
-    this.applyTransform({ scaleY: nextPercent / 100.0 });
-  }
-
-  decrementScaleY(event) {
-    event.preventDefault();
-    if (this.current.index === null) return;
-
-    const currentPercent = Math.round((this.current.scaleY || 1) * 100);
-    const snapped = snapDownToGrid(currentPercent, SCALE_SNAP_PERCENT);
-    const nextPercent = Math.max(10, snapped); // ★ 下限 10%
-
-    this.applyTransform({ scaleY: nextPercent / 100.0 });
-  }
-
   updateScaleYFromInput() {
-    if (this.current.index === null) return;
+    if (!this.hasSelection()) return;
 
     let rawPercent = parseFloat(this.scaleYInputTarget.value);
     if (Number.isNaN(rawPercent)) return;
 
+    // 10%〜400% に制限
     if (rawPercent < 10) rawPercent = 10;
     if (rawPercent > 400) rawPercent = 400;
 
@@ -325,7 +323,7 @@ export default class extends Controller {
   // 共通: state 更新 + Canvas へ通知
   // ==========================
   applyTransform(partial) {
-    if (this.current.index === null) return;
+    if (!this.hasSelection()) return;
 
     // state 更新（Fabric の内部表現に合わせて scale は倍率）
     const next = { ...this.current };
@@ -357,7 +355,9 @@ export default class extends Controller {
     this.updateUIFromState();
   }
 
+  // ==========================
   // Enter キーで form submit させず、その場で値を反映
+  // ==========================
   suppressEnter(event) {
     if (event.key !== "Enter") return;
 
