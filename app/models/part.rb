@@ -48,7 +48,7 @@ class Part < ApplicationRecord
     "helmets"    => "helmet",
     "goggles"    => "goggle",
     "acc"        => "accessory",
-    "basics"     => "basic",
+    "basics"     => "basic"
   }.freeze
 
     CATEGORY_LABELS = {
