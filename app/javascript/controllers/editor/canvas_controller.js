@@ -83,27 +83,6 @@ export default class extends Controller {
   setupFabricSelectionEvents() {
     if (!this.fabricCanvas) return;
 
-    // 新しく選択されたとき
-    this.fabricCanvas.on("selection:created", (e) => {
-      this.handleFabricSelection(e);
-    });
-
-    // 選択が更新されたとき（別のオブジェクトに移った等）
-    this.fabricCanvas.on("selection:updated", (e) => {
-      this.handleFabricSelection(e);
-    });
-
-    // 選択がクリアされたとき
-    this.fabricCanvas.on("selection:cleared", () => {
-      console.log("[editor--canvas] handleFabricSelection (cleared)");
-
-      window.dispatchEvent(
-        new CustomEvent("layers:activeChanged", {
-          detail: { index: null, objectType: null }
-        })
-      );
-    });
-
     // ★ オブジェクト変形後（ドラッグ終了・回転終了・リサイズ終了）にも反映
     this.fabricCanvas.on("object:modified", this.handleFabricSelection);
   }
@@ -190,7 +169,7 @@ export default class extends Controller {
     }
   }
 
-  // パーツサムネイルから呼ばれる
+  // パーツサムネイルから呼ばれる（SVGベクター版）
   handlePaletteInsert(event) {
     const detail = event.detail || {};
     const { partId, assetUrl, name, category } = detail;
@@ -203,41 +182,59 @@ export default class extends Controller {
     }
 
     const url = assetUrl;
-    console.log("[editor--canvas] loading IMAGE from URL (Promise):", url);
+    console.log("[editor--canvas] loading SVG from URL (Promise):", url);
 
-    const ImageClass = this.resolveImageClass();
-    if (!ImageClass) return;
-
-    const result = ImageClass.fromURL(url, {
-      crossOrigin: "anonymous"
-    });
-
-    if (!result || typeof result.then !== "function") {
-      console.warn(
-        "[editor--canvas] fromURL が Promise を返しません。想定外のシグネチャです",
-        { result }
-      );
+    // Fabric v6 の Promise 版 API を想定
+    if (typeof fabric.loadSVGFromURL !== "function") {
+      console.error("[editor--canvas] fabric.loadSVGFromURL が見つかりません", fabric);
       return;
     }
 
-    result
-      .then((img) => {
-        if (!img) {
-          console.warn("[editor--canvas] fromURL の結果 img が null/undefined です");
+    fabric
+      .loadSVGFromURL(url)
+      .then((result) => {
+        // v6 では { objects, options } 形式が返ってくる想定
+        const objects = result.objects || result[0] || [];
+        const options = result.options || result[1] || {};
+
+        if (!objects || (Array.isArray(objects) && objects.length === 0)) {
+          console.warn("[editor--canvas] SVG の objects が空です:", result);
           return;
         }
 
-        console.log("[editor--canvas] image loaded (Promise)", {
-          className: img.constructor && img.constructor.name,
-          type: img.type,
-          width: img.width,
-          height: img.height
+        console.log("[editor--canvas] SVG loaded (Promise)", {
+          objectsCount: Array.isArray(objects) ? objects.length : 1,
+          raw: result
         });
 
-        this.insertImageToCenter(img, { partId, name, category });
+        let svgObject;
+
+        if (Array.isArray(objects)) {
+          // 複数オブジェクト → 1 つのグループにまとめる
+          if (fabric.util && typeof fabric.util.groupSVGElements === "function") {
+            svgObject = fabric.util.groupSVGElements(objects, options);
+          } else {
+            // util.groupSVGElements が無い場合はとりあえず最初だけ使う
+            console.warn(
+              "[editor--canvas] groupSVGElements が見つからないため、先頭オブジェクトのみ使用します"
+            );
+            svgObject = objects[0];
+          }
+        } else {
+          // 単体オブジェクト
+          svgObject = objects;
+        }
+
+        if (!svgObject || typeof svgObject.set !== "function") {
+          console.warn("[editor--canvas] SVG result is not a fabric object", svgObject);
+          return;
+        }
+
+        // ベクターパーツをキャンバス中央に追加
+        this.insertSvgToCenter(svgObject, { partId, name, category });
       })
       .catch((error) => {
-        console.error("[editor--canvas] ImageClass.fromURL でエラー発生", error);
+        console.error("[editor--canvas] loadSVGFromURL でエラー発生", error);
       });
   }
 
@@ -330,6 +327,75 @@ export default class extends Controller {
 
     // ★ 選択中レイヤーも通知
     this.notifyActiveLayer(img);
+  }
+
+  // ===== SVG ベクターパーツをキャンバス中央に追加する =====
+  insertSvgToCenter(svgObject, meta) {
+    const canvas = this.fabricCanvas;
+    const canvasWidth = canvas.getWidth();
+    const canvasHeight = canvas.getHeight();
+
+    // SVG のバウンディングボックスから元サイズを取得
+    const bounds = svgObject.getBoundingRect();
+    const rawWidth = bounds.width || 100;
+    const rawHeight = bounds.height || 100;
+
+    const centerX = canvasWidth / 2;
+    const centerY = canvasHeight / 2;
+
+    const MAX_SAFE_SIZE = 3000;
+    if (rawWidth > MAX_SAFE_SIZE || rawHeight > MAX_SAFE_SIZE) {
+      const scale = MAX_SAFE_SIZE / Math.max(rawWidth, rawHeight);
+      svgObject.scale(scale);
+    }
+
+    // ★ 新しい metaIndex を採番
+    const newMetaIndex = this.nextMetaIndex++;
+
+    svgObject.set({
+      originX: "center",
+      originY: "center",
+      left: centerX,
+      top: centerY,
+
+      // メタ情報（既存 Image と同じ構成）
+      partId:       meta.partId ? Number(meta.partId) : null,
+      partName:     meta.name,
+      partCategory: meta.category,
+      toneCode:     "neutral",
+
+      metaIndex:    newMetaIndex
+    });
+
+    // ★ ストロークを「拡大縮小しても太さ一定」にする
+    this.applyStrokeUniform(svgObject);
+
+    svgObject.setCoords();
+    canvas.add(svgObject);
+    canvas.setActiveObject(svgObject);
+    canvas.requestRenderAll();
+
+    console.log("[editor--canvas] inserted SVG meta", {
+      partId: svgObject.partId,
+      partName: svgObject.partName,
+      metaIndex: svgObject.metaIndex
+    });
+
+    // 右カラムのレイヤー一覧へ通知（layers:added）
+    window.dispatchEvent(
+      new CustomEvent("layers:added", {
+        detail: {
+          index: newMetaIndex,
+          partId: svgObject.partId,
+          partName: svgObject.partName,
+          partCategory: svgObject.partCategory,
+          toneCode: svgObject.toneCode
+        }
+      })
+    );
+
+    // アクティブレイヤー通知
+    this.notifyActiveLayer(svgObject);
   }
 
   // フォーム送信時
@@ -728,5 +794,39 @@ export default class extends Controller {
       partId: target.partId,
       type: target.type
     });
+  }
+
+  // ===== SVG のストローク設定＆塗り統一 =====
+  applyStrokeUniform(obj) {
+    if (!obj) return;
+
+    // グループなら子要素にも再帰的に適用
+    if (obj.type === "group" && Array.isArray(obj._objects)) {
+      obj._objects.forEach((child) => this.applyStrokeUniform(child));
+    }
+
+    if (typeof obj.set === "function") {
+      // Fabric が解釈した「現在の fill 値」
+      const fill = obj.fill;
+
+      // 「もともと塗りがあった」とみなす条件
+      const hasFill =
+        fill &&                    // null / undefined / "" ではない
+        fill !== "none" &&         // SVG 的な「塗りなし」
+        fill !== "transparent" &&  // 透明
+        fill !== "rgba(0,0,0,0)";  // alpha 0 なケースの保険
+
+      const patch = {
+        strokeUniform: true,
+        objectCaching: false
+      };
+
+      // 元々塗りありのものだけ色を統一
+      if (hasFill) {
+        patch.fill = "#BBCCDD";
+      }
+
+      obj.set(patch);
+    }
   }
 }
