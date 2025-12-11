@@ -124,32 +124,73 @@
 
     / ── 右カラム：選択中パーツ詳細＋レイヤー一覧 ──
     .space-y-4
-      / 選択中パーツ詳細（ダミー）
-      .bg-white.rounded-lg.shadow-sm.p-3
+      / 選択中パーツ詳細（実装版）
+      .bg-white.border.border-gray-300.p-3 data-controller="editor--selection"
         h2.text-sm.font-semibold.text-gray-700.mb-2 選択中パーツ
 
-        / 未選択時メッセージ（ダミー）
-        p.text-xs.text-gray-500.mb-2
+        / 未選択時メッセージ
+        p.text-xs.text-gray-500.mb-2 data-editor--selection-target="emptyMessage"
           | キャンバス上のパーツをクリックすると、ここに詳細が表示されます。
 
-        dl class="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-gray-700"
-          dt.text-gray-500 部位
-          dd.font-semibold 目
+        / 詳細パネル（選択中のみ表示）
+        dl.grid.grid-cols-2.gap-x-3.gap-y-2.text-gray-700 class="text-[11px]" data-editor--selection-target="detailPanel"
+          / パーツ名 / 部位
+          dt.text-gray-500 パーツ / 部位
+          dd.font-mono
+            span data-editor--selection-target="partName"
+              | GestaltEyes01
+            span.text-xs.text-gray-500.ml-1 data-editor--selection-target="partCategory"
+              | / eye
 
-          dt.text-gray-500 トーン
-          dd.font-semibold 赤＋白（primary_tint）
+          / X 座標
+          dt.text-gray-500 X座標 (px)
+          dd
+            .flex.items-center.gap-1
+              button type="button" class="px-1 py-0.5 border text-[10px]" data-action="click->editor--selection#decrementX"
+                | ＜
+              input type="number" step="1" class="w-16 px-1 py-0.5 border text-right font-mono text-[11px]" data-editor--selection-target="xInput" data-action="keydown->editor--selection#suppressEnter change->editor--selection#updateXFromInput blur->editor--selection#updateXFromInput"
+              button type="button" class="px-1 py-0.5 border text-[10px]" data-action="click->editor--selection#incrementX"
+                | ＞
 
-          dt.text-gray-500 X座標
-          dd.font-mono 345
+          / Y 座標
+          dt.text-gray-500 Y座標 (px)
+          dd
+            .flex.items-center.gap-1
+              button type="button" class="px-1 py-0.5 border text-[10px]" data-action="click->editor--selection#decrementY"
+                | ＜
+              input type="number" step="1" class="w-16 px-1 py-0.5 border text-right font-mono text-[11px]" data-editor--selection-target="yInput" data-action="keydown->editor--selection#suppressEnter change->editor--selection#updateYFromInput blur->editor--selection#updateYFromInput"
+              button type="button" class="px-1 py-0.5 border text-[10px]" data-action="click->editor--selection#incrementY"
+                | ＞
 
-          dt.text-gray-500 Y座標
-          dd.font-mono 555
+          / 回転
+          dt.text-gray-500 回転 (°)
+          dd
+            .flex.items-center.gap-1
+              button type="button" class="px-1 py-0.5 border text-[10px]" data-action="click->editor--selection#decrementAngle"
+                | ＜
+              input type="number" step="1" class="w-16 px-1 py-0.5 border text-right font-mono text-[11px]" data-editor--selection-target="angleInput" data-action="keydown->editor--selection#suppressEnter change->editor--selection#updateAngleFromInput blur->editor--selection#updateAngleFromInput"
+              button type="button" class="px-1 py-0.5 border text-[10px]" data-action="click->editor--selection#incrementAngle"
+                | ＞
 
-          dt.text-gray-500 拡大率
-          dd.font-mono 1.0 × 1.0
+          / 拡大率 X
+          dt.text-gray-500 拡大率 X (%)
+          dd
+            .flex.items-center.gap-1
+              button type="button" class="px-1 py-0.5 border text-[10px]" data-action="click->editor--selection#decrementScaleX"
+                | ＜
+              input type="number" step="1" class="w-16 px-1 py-0.5 border text-right font-mono text-[11px]" data-editor--selection-target="scaleXInput" data-action="keydown->editor--selection#suppressEnter change->editor--selection#updateScaleXFromInput blur->editor--selection#updateScaleXFromInput"
+              button type="button" class="px-1 py-0.5 border text-[10px]" data-action="click->editor--selection#incrementScaleX"
+                | ＞
 
-          dt.text-gray-500 回転
-          dd.font-mono 15°
+          / 拡大率 Y
+          dt.text-gray-500 拡大率 Y (%)
+          dd
+            .flex.items-center.gap-1
+              button type="button" class="px-1 py-0.5 border text-[10px]" data-action="click->editor--selection#decrementScaleY"
+                | ＜
+              input type="number" step="1" class="w-16 px-1 py-0.5 border text-right font-mono text-[11px]" data-editor--selection-target="scaleYInput" data-action="keydown->editor--selection#suppressEnter change->editor--selection#updateScaleYFromInput blur->editor--selection#updateScaleYFromInput"
+              button type="button" class="px-1 py-0.5 border text-[10px]" data-action="click->editor--selection#incrementScaleY"
+                | ＞
 
       / ロック系トグル（将来ここに Stimulus action をつける）
       .mt-3.flex.flex-wrap.gap-2

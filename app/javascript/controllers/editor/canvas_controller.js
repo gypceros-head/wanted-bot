@@ -28,6 +28,9 @@ export default class extends Controller {
     this.subscribeLayerEvents();
     this.setupFabricSelectionEvents();
 
+    // ★ 選択パネル（editor--selection）からの更新を購読
+    this.subscribeSelectionEvents();
+
     this.fabricCanvas.renderAll();
   }
 
@@ -46,6 +49,14 @@ export default class extends Controller {
       this.fabricCanvas.off("selection:updated", this.handleFabricSelection);
       this.fabricCanvas.off("selection:cleared", this.handleFabricSelection);
     }
+
+    this.fabricCanvas.off("object:modified", this.handleFabricSelection);
+
+    // ★ selection:transform イベント購読解除
+    if (this.handleSelectionTransform) {
+      window.removeEventListener("selection:transform", this.handleSelectionTransform);
+    }
+
   }
 
   // ===== 初期化まわり =====
@@ -92,6 +103,9 @@ export default class extends Controller {
         })
       );
     });
+
+    // ★ オブジェクト変形後（ドラッグ終了・回転終了・リサイズ終了）にも反映
+    this.fabricCanvas.on("object:modified", this.handleFabricSelection);
   }
 
   restoreFromStateField() {
@@ -392,11 +406,62 @@ export default class extends Controller {
     window.addEventListener("layers:remove", this.handleLayerRemove);
   }
 
+  subscribeSelectionEvents() {
+    this.handleSelectionTransform = this.handleSelectionTransform.bind(this);
+    window.addEventListener("selection:transform", this.handleSelectionTransform);
+  }
+
   unsubscribeLayerEvents() {
     window.removeEventListener("layers:select", this.handleLayerSelect);
     window.removeEventListener("layers:move", this.handleLayerMove);
     window.removeEventListener("layers:toggleVisible", this.handleLayerToggleVisible); // ★ こちらも揃える
     window.removeEventListener("layers:remove", this.handleLayerRemove);
+  }
+
+  // =======================================
+  // 選択パネル（editor--selection）との連携
+  // =======================================
+  // selection:transform を受け取り、アクティブオブジェクトに反映
+  handleSelectionTransform(event) {
+    const detail = event.detail || {};
+    const canvas = this.fabricCanvas;
+    if (!canvas) return;
+
+    const active = canvas.getActiveObject();
+    if (!active) {
+      console.warn("[editor--canvas] selection:transform but no active object");
+      return;
+    }
+
+    const w = canvas.getWidth();
+    const h = canvas.getHeight();
+
+    const update = {};
+
+    // ★ パネルから来る x, y は「中央原点」なので、Canvas 左上原点に戻す
+    if (typeof detail.x === "number") {
+      update.left = detail.x + w / 2;
+    }
+    if (typeof detail.y === "number") {
+      update.top = detail.y + h / 2;
+    }
+
+    if (typeof detail.angle === "number") {
+      update.angle = detail.angle;
+    }
+    if (typeof detail.scaleX === "number") {
+      update.scaleX = detail.scaleX;
+    }
+    if (typeof detail.scaleY === "number") {
+      update.scaleY = detail.scaleY;
+    }
+
+    active.set(update);
+    active.setCoords();
+    canvas.requestRenderAll();
+
+    // 変更後の状態を再度各パネルに通知
+    this.handleFabricSelection();
   }
 
   // =======================================
@@ -557,10 +622,9 @@ export default class extends Controller {
   handleFabricSelection(fabricEvent) {
     if (!this.fabricCanvas) return;
 
-    // Fabric の activeObject を取得
-    const active = this.fabricCanvas.getActiveObject();
+    const canvas = this.fabricCanvas;
+    const active = canvas.getActiveObject();
 
-    // metaIndex は restore 時や insert 時にセットしている前提
     const metaIndex  = active && typeof active.metaIndex === "number" ? active.metaIndex : null;
     const objectType = active ? active.type : null;
 
@@ -569,7 +633,7 @@ export default class extends Controller {
       objectType
     });
 
-    // ★ レイヤー側に「今選択中の index はこれ」と通知するイベントを投げる
+    // レイヤー側へ通知
     window.dispatchEvent(
       new CustomEvent("layers:activeChanged", {
         detail: {
@@ -578,6 +642,37 @@ export default class extends Controller {
         }
       })
     );
+
+    if (active && metaIndex !== null) {
+      const w = canvas.getWidth();
+      const h = canvas.getHeight();
+
+      // ★ キャンバス中央を原点とした論理座標
+      const logicalX = (active.left ?? 0) - w / 2;
+      const logicalY = (active.top ?? 0) - h / 2;
+
+      window.dispatchEvent(
+        new CustomEvent("selection:changed", {
+          detail: {
+            index: metaIndex,
+            partName: active.partName || null,
+            partCategory: active.partCategory || null,
+            x: logicalX,
+            y: logicalY,
+            angle: active.angle ?? 0,
+            scaleX: active.scaleX ?? 1,
+            scaleY: active.scaleY ?? 1
+          }
+        })
+      );
+    } else {
+      // 選択解除
+      window.dispatchEvent(
+        new CustomEvent("selection:changed", {
+          detail: { index: null }
+        })
+      );
+    }
   }
 
   // 明示的に「このオブジェクトがアクティブ」と伝えたいとき用のヘルパ
