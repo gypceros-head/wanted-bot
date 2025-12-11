@@ -161,38 +161,48 @@
           | 回転ロック
 
       / レイヤー一覧（実データ）
-      - assemblies = blueprint.assemblies.includes(:part).order(:layer_order)
+      - assemblies = blueprint.assemblies.includes(:part).order(layer_order: :desc)
       .bg-white.rounded-lg.shadow-sm.p-3
         h2.text-sm.font-semibold.text-gray-700.mb-2 レイヤー
 
         - if assemblies.empty?
           p.text-xs.text-gray-500
             | まだ保存されたパーツがありません。「保存する」とキャンバス上のパーツがレイヤーとして表示されます。
+
         - else
           .flex.justify-between.items-center.mb-2
-            span.text-[11px].text-gray-600 レイヤー順やパーツ情報の一覧です（操作UIは今後追加予定）。
-            
+            span.text-gray-600 class="text-[11px]"
+              | レイヤー順やパーツ情報の一覧です（操作UIは今後追加予定）。
+
             .flex.gap-1
               button type="button" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100"
                 | すべて表示
               button type="button" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100"
                 | すべてロック
 
-          .space-y-1.text-[11px]
-            - assemblies.each do |assembly|
-              - part = assembly.part
-              .flex.items-center.gap-2.p-2.rounded.border.border-gray-200.bg-white.hover:bg-gray-50.cursor-pointer data-controller="editor--layers" data-editor--layers-index-value=assembly.layer_order data-action="click->editor--layers#select"
-                / 可視 / 非表示トグル
-                input type="checkbox" checked=true class="h-3 w-3 text-blue-600 rounded border-gray-300" data-editor--layers-target="visibilityToggle" data-action="click->editor--layers#toggleVisibility"
+        / レイヤー行一覧（Stimulus の list ターゲット）
+        .space-y-1 class="text-[11px]" data-controller="editor--layers" data-editor--layers-target="list"
+          - assemblies.each do |assembly|
+            - part = assembly.part
 
-                .flex-1
-                  p.font-semibold.text-gray-800
-                    = "レイヤー #{assembly.layer_order + 1}：#{part&.category.presence || 'unknown'} / #{part&.name.presence || "Part ##{assembly.part_id}"}"
-                  p.text-gray-500
-                    = "part_id: ##{assembly.part_id} / tone: #{assembly.tone_code.presence || 'neutral'}"
+            .flex.items-center.gap-2.p-2.rounded.border.border-gray-200.bg-white.hover:bg-gray-50.cursor-pointer data-controller="editor--layers" data-editor--layers-index-value=assembly.layer_order data-action="click->editor--layers#select"
 
-                .flex.flex-col.gap-1
-                  button type="button" class="px-1 py-0.5 rounded border border-gray-300 hover:bg-gray-100" data-action="click->editor--layers#moveUp"
-                    | ▲
-                  button type="button" class="px-1 py-0.5 rounded border border-gray-300 hover:bg-gray-100" data-action="click->editor--layers#moveDown"
-                    | ▼
+              / 可視 / 非表示トグル
+              input type="checkbox" checked=true class="h-3 w-3 text-blue-600 rounded border-gray-300" data-editor--layers-target="visibilityToggle" data-action="click->editor--layers#toggleVisible"
+
+              .flex-1
+                p.font-semibold.text-gray-800
+                  = "レイヤー #{assembly.layer_order + 1}：#{part&.category.presence || 'unknown'} / #{part&.name.presence || "Part ##{assembly.part_id}"}"
+                p.text-gray-500
+                  = "part_id: ##{assembly.part_id} / tone: #{assembly.tone_code.presence || 'neutral'}"
+
+              .flex.flex-col.gap-1
+                button type="button" class="px-1 py-0.5 rounded border border-gray-300 hover:bg-gray-100" data-action="click->editor--layers#moveUp"
+                  | ▲
+
+                button type="button" class="px-1 py-0.5 rounded border border-gray-300 hover:bg-gray-100" data-action="click->editor--layers#moveDown"
+                  | ▼
+
+              / 削除ボタン（1 レイヤー 1 つ）
+              button type="button" class="ml-1 px-2 py-1 rounded border border-red-300 text-red-600 hover:bg-red-50 text-[11px]" data-action="click->editor--layers#remove"
+                  | 削除

@@ -13,6 +13,9 @@ export default class extends Controller {
  connect() {
     console.log("[editor--canvas] connect!", this.canvasTarget);
 
+    // metaIndex 採番用カウンタ
+    this.nextMetaIndex = 0;
+
     const paperColor = this.hasPaperColorValue ? this.paperColorValue : "#f8f0d8";
 
     this.setupCanvas(paperColor);
@@ -23,6 +26,7 @@ export default class extends Controller {
 
     // ★ レイヤー関連イベント購読
     this.subscribeLayerEvents();
+    this.setupFabricSelectionEvents();
 
     this.fabricCanvas.renderAll();
   }
@@ -35,6 +39,13 @@ export default class extends Controller {
 
     // ★ レイヤー関連イベント購読解除
     this.unsubscribeLayerEvents();
+
+    // ★ Fabric の selection イベント解除
+    if (this.fabricCanvas && this.handleFabricSelection) {
+      this.fabricCanvas.off("selection:created", this.handleFabricSelection);
+      this.fabricCanvas.off("selection:updated", this.handleFabricSelection);
+      this.fabricCanvas.off("selection:cleared", this.handleFabricSelection);
+    }
   }
 
   // ===== 初期化まわり =====
@@ -50,11 +61,42 @@ export default class extends Controller {
     // 念のため直接プロパティもセット
     this.fabricCanvas.backgroundColor = paperColor;
     this.fabricCanvas.requestRenderAll();
+
+    // ★ 選択状態の変化を監視
+    this.handleFabricSelection = this.handleFabricSelection.bind(this);
+    this.fabricCanvas.on("selection:created", this.handleFabricSelection);
+    this.fabricCanvas.on("selection:updated", this.handleFabricSelection);
+    this.fabricCanvas.on("selection:cleared", this.handleFabricSelection);
+  }
+
+  setupFabricSelectionEvents() {
+    if (!this.fabricCanvas) return;
+
+    // 新しく選択されたとき
+    this.fabricCanvas.on("selection:created", (e) => {
+      this.handleFabricSelection(e);
+    });
+
+    // 選択が更新されたとき（別のオブジェクトに移った等）
+    this.fabricCanvas.on("selection:updated", (e) => {
+      this.handleFabricSelection(e);
+    });
+
+    // 選択がクリアされたとき
+    this.fabricCanvas.on("selection:cleared", () => {
+      console.log("[editor--canvas] handleFabricSelection (cleared)");
+
+      window.dispatchEvent(
+        new CustomEvent("layers:activeChanged", {
+          detail: { index: null, objectType: null }
+        })
+      );
+    });
   }
 
   restoreFromStateField() {
     if (!this.hasStateFieldTarget || !this.stateFieldTarget.value) {
-      this.addDebugRectAtCenter();
+      // 初期状態：空キャンバスのまま
       return;
     }
 
@@ -65,12 +107,12 @@ export default class extends Controller {
       console.log("[editor--canvas] initialJson", state);
     } catch (e) {
       console.warn("[editor--canvas] stateField の JSON パースに失敗しました", e);
-      this.addDebugRectAtCenter();
+      // パース失敗時も空のまま
       return;
     }
 
     if (!state || !Array.isArray(state.objects) || state.objects.length === 0) {
-      this.addDebugRectAtCenter();
+      // オブジェクトが無ければ何も復元しない
       return;
     }
 
@@ -81,15 +123,14 @@ export default class extends Controller {
       this.fabricCanvas.backgroundColor = state.background;
     }
 
-    // ★ Fabric v6 の loadFromJSON は Promise を返すので、それを利用する
     this.fabricCanvas
       .loadFromJSON(state)
       .then(() => {
         const objects = this.fabricCanvas.getObjects();
         console.log("[editor--canvas] loadFromJSON done, objects:", objects.length);
 
-        // meta[index] とオブジェクトを対応付けてメタ情報を復元
         objects.forEach((obj, index) => {
+
           const info = meta[index];
           if (!info) return;
 
@@ -102,17 +143,21 @@ export default class extends Controller {
           obj.setCoords();
         });
 
-        if (objects.length === 0) {
-          this.addDebugRectAtCenter();
-        }
+        // ★ 既存オブジェクトの metaIndex から「次の採番値」を決める
+        let maxMetaIndex = -1;
+        objects.forEach((obj) => {
+          if (typeof obj.metaIndex === "number" && obj.metaIndex > maxMetaIndex) {
+            maxMetaIndex = obj.metaIndex;
+          }
+        });
+        this.nextMetaIndex = maxMetaIndex + 1;
+        console.log("[editor--canvas] init nextMetaIndex", this.nextMetaIndex);
 
-        // ★ 明示的に再描画を要求
         this.fabricCanvas.requestRenderAll();
         console.log("[editor--canvas] canvas renderAll after restore");
       })
       .catch((e) => {
         console.warn("[editor--canvas] loadFromJSON failed", e);
-        this.addDebugRectAtCenter();
         this.fabricCanvas.requestRenderAll();
       });
   }
@@ -226,18 +271,23 @@ export default class extends Controller {
     const centerX = canvasWidth / 2;
     const centerY = canvasHeight / 2;
 
-    // ★ 位置情報＋メタ情報をすべて set でまとめて設定
+    // ★ 新しい metaIndex を付与（= 現在のオブジェクト数）
+    const newMetaIndex = this.nextMetaIndex++;
+
     img.set({
       originX: "center",
       originY: "center",
       left: centerX,
       top: centerY,
 
-      // メタ情報（toJSON で拾いたいもの）
+      // メタ情報
       partId:       meta.partId ? Number(meta.partId) : null,
       partName:     meta.name,
       partCategory: meta.category,
-      toneCode:     "neutral"
+      toneCode:     "neutral",
+
+      // ★ これが重要：レイヤーのユニークインデックス
+      metaIndex: newMetaIndex
     });
 
     img.setCoords();
@@ -245,40 +295,27 @@ export default class extends Controller {
     canvas.setActiveObject(img);
     canvas.requestRenderAll();
 
-    // デバッグ用ログ（ちゃんと載っているか確認）
     console.log("[editor--canvas] inserted image meta", {
       partId: img.partId,
       partName: img.partName,
-      partCategory: img.partCategory,
-      toneCode: img.toneCode
-    });
-  }
-
-  // ===== デフォルトオブジェクト =====
-
-  // 中央にデバッグ用の赤い四角を置く
-  addDebugRectAtCenter() {
-    const canvas = this.fabricCanvas;
-    if (!canvas) return;
-
-    const centerX = canvas.getWidth() / 2;
-    const centerY = canvas.getHeight() / 2;
-
-    const rect = new fabric.Rect({
-      left: centerX,
-      top: centerY,
-      originX: "center",
-      originY: "center",
-      width: 120,
-      height: 80,
-      fill: "#cc3333"
+      metaIndex: img.metaIndex
     });
 
-    canvas.add(rect);
-    canvas.setActiveObject(rect);
-    canvas.requestRenderAll();
+    // ★ 新規レイヤーを右カラムへ通知（重要）
+    window.dispatchEvent(
+      new CustomEvent("layers:added", {
+        detail: {
+          index: newMetaIndex,
+          partId: img.partId,
+          partName: img.partName,
+          partCategory: img.partCategory,
+          toneCode: img.toneCode
+        }
+      })
+    );
 
-    console.log("[editor--canvas] addDebugRectAtCenter added");
+    // ★ 選択中レイヤーも通知
+    this.notifyActiveLayer(img);
   }
 
   // フォーム送信時
@@ -345,24 +382,21 @@ export default class extends Controller {
   subscribeLayerEvents() {
     // bind して this を固定
     this.handleLayerSelect = this.handleLayerSelect.bind(this);
-    this.handleLayerToggleVisibility = this.handleLayerToggleVisibility.bind(this);
+    this.handleLayerToggleVisible = this.handleLayerToggleVisible.bind(this); // ← 名称統一
     this.handleLayerMove = this.handleLayerMove.bind(this);
+    this.handleLayerRemove = this.handleLayerRemove?.bind(this);
 
     window.addEventListener("layers:select", this.handleLayerSelect);
-    window.addEventListener("layers:toggleVisibility", this.handleLayerToggleVisibility);
+    window.addEventListener("layers:toggleVisible", this.handleLayerToggleVisible); // ★ 名称を 'toggleVisible' に揃える
     window.addEventListener("layers:move", this.handleLayerMove);
+    window.addEventListener("layers:remove", this.handleLayerRemove);
   }
 
   unsubscribeLayerEvents() {
-    if (this.handleLayerSelect) {
-      window.removeEventListener("layers:select", this.handleLayerSelect);
-    }
-    if (this.handleLayerToggleVisibility) {
-      window.removeEventListener("layers:toggleVisibility", this.handleLayerToggleVisibility);
-    }
-    if (this.handleLayerMove) {
-      window.removeEventListener("layers:move", this.handleLayerMove);
-    }
+    window.removeEventListener("layers:select", this.handleLayerSelect);
+    window.removeEventListener("layers:move", this.handleLayerMove);
+    window.removeEventListener("layers:toggleVisible", this.handleLayerToggleVisible); // ★ こちらも揃える
+    window.removeEventListener("layers:remove", this.handleLayerRemove);
   }
 
   // =======================================
@@ -398,12 +432,15 @@ export default class extends Controller {
 
     this.fabricCanvas.setActiveObject(target);
     this.fabricCanvas.requestRenderAll();
+
+    // ★ 選択変更をレイヤー一覧へ通知
+    this.notifyActiveLayer(target);
   }
 
   // 表示 / 非表示切り替え
-  handleLayerToggleVisibility(event) {
+  handleLayerToggleVisible(event) {
     const { index, visible } = event.detail || {};
-    console.log("[editor--canvas] handleLayerToggleVisibility", { index, visible });
+    console.log("[editor--canvas] handleLayerToggleVisible", { index, visible });
 
     if (index === undefined) return;
 
@@ -511,5 +548,90 @@ export default class extends Controller {
     );
 
     canvas.requestRenderAll();
+
+    // ★ 移動後のアクティブレイヤーを通知
+    this.notifyActiveLayer(target);
+  }
+
+  // ★ キャンバス上でオブジェクト選択が変わったときに呼ばれる想定
+  handleFabricSelection(fabricEvent) {
+    if (!this.fabricCanvas) return;
+
+    // Fabric の activeObject を取得
+    const active = this.fabricCanvas.getActiveObject();
+
+    // metaIndex は restore 時や insert 時にセットしている前提
+    const metaIndex  = active && typeof active.metaIndex === "number" ? active.metaIndex : null;
+    const objectType = active ? active.type : null;
+
+    console.log("[editor--canvas] handleFabricSelection", {
+      metaIndex,
+      objectType
+    });
+
+    // ★ レイヤー側に「今選択中の index はこれ」と通知するイベントを投げる
+    window.dispatchEvent(
+      new CustomEvent("layers:activeChanged", {
+        detail: {
+          index: metaIndex,
+          objectType: objectType
+        }
+      })
+    );
+  }
+
+  // 明示的に「このオブジェクトがアクティブ」と伝えたいとき用のヘルパ
+  notifyActiveLayer(obj) {
+    const metaIndex = obj ? obj.metaIndex : null;
+
+    window.dispatchEvent(
+      new CustomEvent("layers:activeChanged", {
+        detail: { index: metaIndex }
+      })
+    );
+  }
+
+  // レイヤー削除（右カラム「削除」ボタンから）
+  handleLayerRemove(event) {
+    const { index } = event.detail || {};
+    console.log("[editor--canvas] handleLayerRemove", { index });
+
+    if (typeof index !== "number" || !this.fabricCanvas) {
+      console.warn("[editor--canvas] handleLayerRemove: invalid index or canvas not ready");
+      return;
+    }
+
+    const canvas = this.fabricCanvas;
+    const objects = canvas.getObjects();
+
+    // metaIndex から対象オブジェクトを検索
+    const target = objects.find((obj) => obj.metaIndex === index);
+    if (!target) {
+      console.warn("[editor--canvas] handleLayerRemove: target not found for index", index);
+      return;
+    }
+
+    const wasActive = canvas.getActiveObject() === target;
+
+    // キャンバスから削除
+    canvas.remove(target);
+
+    if (wasActive) {
+      canvas.discardActiveObject();
+      // アクティブレイヤー無しをレイヤー一覧に通知
+      window.dispatchEvent(
+        new CustomEvent("layers:activeChanged", {
+          detail: { index: null }
+        })
+      );
+    }
+
+    canvas.requestRenderAll();
+
+    console.log("[editor--canvas] removed object", {
+      metaIndex: target.metaIndex,
+      partId: target.partId,
+      type: target.type
+    });
   }
 }
