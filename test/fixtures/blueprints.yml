@@ -24,9 +24,9 @@
 one:
   post: one
   name: MyString
-  editor_state: 
+  editor_state: {}
 
 two:
   post: two
   name: MyString
-  editor_state: 
+  editor_state: {}

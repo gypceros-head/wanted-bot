@@ -30,13 +30,13 @@ class Assembly < ApplicationRecord
   belongs_to :blueprint
   belongs_to :part
 
-  enum tone_code: {
+  enum :tone_code, {
     primary_full:   0,
     primary_tint:   1,
     neutral:        2,
     secondary_tint: 3,
     secondary_full: 4
-  }, _prefix: true
+  }, prefix: true
 
   validates :layer_order, presence: true
   validates :position_x, :position_y,
