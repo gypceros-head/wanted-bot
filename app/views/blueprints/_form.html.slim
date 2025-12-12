@@ -33,6 +33,11 @@
                    value: blueprint.editor_state.to_json,
                    data: { "editor--canvas-target": "stateField" }
 
+  / preview_image_data（PNG dataURL）を hidden で保持（JS と共有）
+  = f.hidden_field :preview_image_data,
+                   value: "",
+                   data: { "editor--canvas-target": "previewField" }
+
   / ─────────────────────────────
   / メイン 3カラムレイアウト
   / 左：パーツリスト

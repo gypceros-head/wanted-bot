@@ -20,5 +20,9 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :blueprints, only: %i[new create edit update show]
+  resources :blueprints, only: %i[new create edit update show] do
+    member do
+      post :preview_image
+    end
+  end
 end

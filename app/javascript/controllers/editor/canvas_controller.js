@@ -7,7 +7,7 @@ import * as fabric from "fabric";
 
 // Connects to data-controller="editor--canvas"
 export default class extends Controller {
-  static targets = ["canvas", "stateField", "nameField"];
+  static targets = ["canvas", "stateField", "nameField", "previewField"];
   static values = {
     paperColor: String
   };
@@ -113,7 +113,16 @@ export default class extends Controller {
       this.stateFieldTarget.value = JSON.stringify(json);
     }
 
-    // 3. 設計図名の入力（ここは従来どおり）
+    // ★ 2.5 PNG を生成して hidden_field に入れる（MVP: dataURLで送る）
+    if (this.fabricCanvas && this.hasPreviewFieldTarget) {
+      const dataUrl = this.fabricCanvas.toDataURL({
+        format: "png",
+        multiplier: 2
+      });
+      this.previewFieldTarget.value = dataUrl;
+    }
+
+    // 3. 設計図名の入力
     if (this.hasNameFieldTarget) {
       const currentName = this.nameFieldTarget.value || "新しい手配書";
       const newName = window.prompt("設計図の名前を入力してください", currentName);

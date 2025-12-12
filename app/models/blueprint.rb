@@ -23,6 +23,8 @@
 class Blueprint < ApplicationRecord
   belongs_to :post, optional: true
 
+  has_one_attached :preview_image
+
   has_many :assemblies, dependent: :destroy
   has_many :parts, through: :assemblies
 
