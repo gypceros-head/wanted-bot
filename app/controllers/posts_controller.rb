@@ -2,6 +2,8 @@ class PostsController < ApplicationController
   before_action :authenticate_user!, except: %i[index show]
   before_action :set_post, only: %i[show edit update destroy destroy_image]
   before_action :authorize_owner!, only: %i[edit update destroy destroy_image]
+  before_action :require_blueprint!, only: %i[new create]
+  before_action :set_blueprint_for_form, only: %i[edit update]
 
   def index
     # 公開済みの投稿を新しい順に取得
@@ -14,16 +16,24 @@ class PostsController < ApplicationController
 
   def new
     @post = current_user.posts.build
+    # @blueprint は require_blueprint! でセット済み
   end
 
   def create
     @post = current_user.posts.build(post_params)
 
-    if @post.save
-      redirect_to @post, notice: "投稿を作成しました。"
-    else
-      flash.now[:alert] = "投稿を作成できませんでした。入力内容を確認してください。"
-      render :new, status: :unprocessable_entity
+    ActiveRecord::Base.transaction do
+      @post.save!
+
+      # Blueprint -> Post を確定
+      @blueprint.update!(post: @post)
+
+      # BlueprintのプレビューPNGを投稿画像として添付
+      unless @blueprint.preview_image.attached?
+        raise ActiveRecord::RecordInvalid.new(@post), "Blueprint preview_image is missing"
+      end
+
+      @post.image.attach(@blueprint.preview_image.blob)
     end
   end
 
@@ -64,14 +74,35 @@ class PostsController < ApplicationController
     @post = Post.find(params[:id])
   end
 
+  def set_blueprint_for_form
+    @blueprint = @post.blueprint
+  end
+
   def authorize_owner!
     unless @post.user == current_user
       redirect_to posts_path, alert: "この投稿を編集する権限がありません。"
     end
   end
 
-  # strong parameters 後で定義
+  def require_blueprint!
+    blueprint_id = params[:blueprint_id] || params.dig(:post, :blueprint_id)
+
+    if blueprint_id.blank?
+      redirect_to posts_path, alert: "投稿する設計図が指定されていません。"
+      return
+    end
+
+    @blueprint = Blueprint.find(blueprint_id)
+
+    # 二重紐づけ防止（すでに投稿済みの設計図を再利用させない）
+    if @blueprint.post_id.present?
+      redirect_to @blueprint, alert: "この設計図は既に投稿済みです。"
+      return
+    end
+  end
+
   def post_params
-    params.require(:post).permit(:title, :caption, :is_published, :image)
+    # MVP: 画像アップロードを禁止するため :image を外す
+    params.require(:post).permit(:title, :caption, :is_published)
   end
 end

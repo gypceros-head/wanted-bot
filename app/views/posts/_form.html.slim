@@ -8,7 +8,9 @@
         li = msg
 
 / フォーム
-= form_with model: @post, local: true, html: { multipart: true, class: "space-y-4" } do |f|
+- form_url = @post.new_record? ? posts_path(blueprint_id: @blueprint.id) : nil
+
+= form_with model: @post, url: form_url, local: true, html: { class: "space-y-4" } do |f|
   .space-y-1
     = f.label :title, "タイトル", class: "block text-sm font-medium text-slate-700"
     = f.text_field :title, class: "mt-1 w-full rounded-md bg-white border-slate-300 shadow-sm"
@@ -18,10 +20,6 @@
     = f.text_area :caption,
                   rows: 5,
                   class: "mt-1 w-full rounded-md bg-white border-slate-300 shadow-sm"
-
-  .space-y-1
-    = f.label :image, "画像（任意）", class: "block text-sm font-medium text-slate-700"
-    = f.file_field :image, class: "mt-1 rounded-md bg-white"
 
   .flex.items-center.space-x-2
     = f.check_box :is_published

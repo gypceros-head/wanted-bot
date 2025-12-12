@@ -28,6 +28,7 @@ class User < ApplicationRecord
   has_many :comments, dependent: :destroy
   has_many :bookmarks, dependent: :destroy
   has_many :bookmarked_posts, through: :bookmarks, source: :post
+  has_many :blueprints, dependent: :destroy
 
   validates :name, presence: true
 end

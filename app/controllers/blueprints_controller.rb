@@ -1,4 +1,5 @@
 class BlueprintsController < ApplicationController
+  before_action :authenticate_user!
   before_action :set_blueprint, only: %i[show edit update preview_image]
   before_action :set_parts,     only: %i[new edit create update]
 
@@ -6,21 +7,20 @@ class BlueprintsController < ApplicationController
   # before_action :authenticate_user!
 
   def new
-    @blueprint = Blueprint.new(
+    @blueprint = current_user.blueprints.new(
       name: "新しい手配書",
       editor_state: default_editor_state
     )
-    # 将来 post と紐づけるならここで post_id もセットする
   end
 
   def create
-    @blueprint = Blueprint.new(blueprint_params)
+    @blueprint = current_user.blueprints.new(blueprint_params)
     assign_editor_state_from_param(@blueprint)
 
     if @blueprint.save
       attach_preview_image_from_param(@blueprint)
       @blueprint.sync_assemblies_from_editor_state!
-      redirect_to edit_blueprint_path(@blueprint), notice: "設計図を作成しました"
+      redirect_to after_save_redirect_path(@blueprint), notice: "設計図を作成しました"
     else
       render :new, status: :unprocessable_entity
     end
@@ -40,7 +40,7 @@ class BlueprintsController < ApplicationController
     if @blueprint.save
       attach_preview_image_from_param(@blueprint)
       @blueprint.sync_assemblies_from_editor_state!
-      redirect_to @blueprint, notice: "設計図を更新しました"
+      redirect_to after_save_redirect_path(@blueprint), notice: "設計図を更新しました"
     else
       render :edit, status: :unprocessable_entity
     end
@@ -76,7 +76,7 @@ class BlueprintsController < ApplicationController
   private
 
   def set_blueprint
-    @blueprint = Blueprint.find(params[:id])
+    @blueprint = current_user.blueprints.find(params[:id])
   end
 
   def set_parts
@@ -111,6 +111,13 @@ class BlueprintsController < ApplicationController
     end
   end
 
+  def after_save_redirect_path(blueprint)
+    if params[:transition] == "to_post"
+      new_post_path(blueprint_id: blueprint.id)
+    else
+      edit_blueprint_path(blueprint)
+    end
+  end
 
   # 新規作成時のデフォルト状態（空のキャンバス）
   def default_editor_state
