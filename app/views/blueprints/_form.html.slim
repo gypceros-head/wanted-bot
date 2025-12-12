@@ -19,9 +19,19 @@
         | 手配書のレイアウトとパーツを編集します。
 
     .flex.items-center.gap-2
-      / ← 将来「プレビュー」ボタンなどを追加してもよい
       = f.submit "保存する",
                  class: "px-4 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700"
+
+      - if blueprint.post_id.blank?
+        = f.button "保存して投稿へ",
+                   type: "submit",
+                   name: "transition",
+                   value: "to_post",
+                   class: "px-4 py-2 rounded bg-violet-700 text-white text-sm hover:bg-violet-800"
+      - else
+        = link_to "投稿を確認",
+                  post_path(blueprint.post),
+                  class: "px-4 py-2 rounded bg-emerald-600 text-white text-sm hover:bg-emerald-700"
 
   / 設計図名は hidden にして、JS から prompt で設定
   = f.hidden_field :name,
@@ -32,6 +42,11 @@
   = f.hidden_field :editor_state,
                    value: blueprint.editor_state.to_json,
                    data: { "editor--canvas-target": "stateField" }
+
+  / preview_image_data（PNG dataURL）を hidden で保持（JS と共有）
+  = f.hidden_field :preview_image_data,
+                   value: "",
+                   data: { "editor--canvas-target": "previewField" }
 
   / ─────────────────────────────
   / メイン 3カラムレイアウト
