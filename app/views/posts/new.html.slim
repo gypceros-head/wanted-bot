@@ -12,6 +12,12 @@
       .mb-6.rounded-lg.border.border-amber-200.bg-amber-50.p-4.text-amber-900.text-sm
         | プレビュー画像が見つかりません。設計図を保存し直してください。
 
+    - if defined?(@blueprint) && @blueprint.present?
+      .mb-4
+        = link_to "← 設計図の編集に戻る",
+                  edit_blueprint_path(@blueprint),
+                  class: "text-sm text-slate-600 hover:underline"
+
     = render "form"
 
     .mt-4
