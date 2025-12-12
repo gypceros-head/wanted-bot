@@ -26,10 +26,17 @@
 
 one:
   post: one
+  user: one
   name: MyString
   editor_state: {}
 
 two:
   post: two
+  user: two
   name: MyString
+  editor_state: {}
+
+draft_one:
+  user: one
+  name: DraftBlueprint
   editor_state: {}
