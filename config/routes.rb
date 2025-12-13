@@ -16,7 +16,8 @@ Rails.application.routes.draw do
 
   resources :posts do
     member do
-      delete :destroy_image  # ← 画像だけ削除する専用アクション
+      delete :destroy_image
+      patch  :toggle_publish
     end
   end
 

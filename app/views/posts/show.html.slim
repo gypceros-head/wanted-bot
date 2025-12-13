@@ -50,11 +50,15 @@
                 = @post.user.name
 
               - if user_signed_in? && @post.user == current_user
-                p.inline-flex.items-center.text-xs.font-medium.rounded-full.px-3.py-1.bg-emerald-50.text-emerald-700
+                .flex.items-center.gap-2
                   - if @post.is_published?
-                    | 公開中
+                    .inline-flex.items-center.text-xs.font-medium.rounded-full.px-3.py-1.bg-emerald-50.text-emerald-700
+                      | 公開中
+                    = button_to "非公開にする", toggle_publish_post_path(@post), method: :patch, class: "text-xs px-3 py-1 rounded border border-slate-300 text-slate-700 hover:bg-slate-50"
                   - else
-                    | 非公開（自分にのみ表示）
+                    .inline-flex.items-center.text-xs.font-medium.rounded-full.px-3.py-1.bg-slate-100.text-slate-700
+                      | 非公開（自分にのみ表示）
+                    = button_to "公開する", toggle_publish_post_path(@post), method: :patch, class: "text-xs px-3 py-1 rounded bg-emerald-600 text-white hover:bg-emerald-700"
 
             / 操作ボタン群
             .mt-4.flex.flex-wrap.gap-3
