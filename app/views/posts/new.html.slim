@@ -2,23 +2,12 @@
   .container.mx-auto.px-4.py-8
     h1.text-2xl.font-bold.mb-4 新規投稿
 
-    - if defined?(@blueprint) && @blueprint&.preview_image&.attached?
-      .mb-6.rounded-lg.border.border-slate-200.bg-white.p-4
-        h2.text-sm.font-semibold.text-slate-700.mb-3 投稿プレビュー
-        = image_tag @blueprint.preview_image, class: "w-full max-w-md rounded-md border border-slate-200 bg-slate-50"
-        p.mt-2.text-xs.text-slate-500
-          | この画像（設計図の完成PNG）が投稿画像として使用されます。
-    - else
-      .mb-6.rounded-lg.border.border-amber-200.bg-amber-50.p-4.text-amber-900.text-sm
-        | プレビュー画像が見つかりません。設計図を保存し直してください。
+    .flex.flex-col.gap-6.lg:flex-row.lg:items-start
+      .flex-none.w-fit
+        = render "image_preview", post: nil, blueprint: @blueprint
 
-    - if defined?(@blueprint) && @blueprint.present?
-      .mb-4
-        = link_to "← 設計図の編集に戻る",
-                  edit_blueprint_path(@blueprint),
-                  class: "text-sm text-slate-600 hover:underline"
+      .flex-1.min-w-0
+        = render "form"
 
-    = render "form"
-
-    .mt-4
-      = link_to "一覧に戻る", posts_path, class: "text-violet-700 hover:underline text-sm"
+        .mt-4
+          = link_to "一覧に戻る", posts_path, class: "text-violet-700 hover:underline text-sm"
