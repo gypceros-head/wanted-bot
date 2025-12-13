@@ -6,32 +6,7 @@
 
     = render "pager", collection: @posts
 
-    - if @posts.present?
-      / カードのグリッドレイアウト
-      .grid.grid-cols-1.md:grid-cols-3.lg:grid-cols-5.gap-6
-        - @posts.each do |post|
-          = link_to post_path(post), class: "block group" do
-            .bg-white.rounded-xl.shadow-sm.border.border-slate-200.overflow-hidden.flex.flex-col.h-full
-              / ▼ サムネイル
-              div class="relative w-full bg-slate-100 overflow-hidden"
-                - if post.image.attached?
-                  = image_tag post.image.variant(resize_to_limit: [800, 800]), class: "w-full h-auto block"
-                - else
-                  = image_tag "no_image.png", class: "w-full h-auto block opacity-70"
-
-              / ▼ テキスト
-              .p-4.flex-1.flex.flex-col
-                h2.text-lg.font-semibold.text-slate-900.group-hover:text-violet-700.transition-colors
-                  = post.title
-
-                p.mt-2.text-sm.text-slate-700
-                  = truncate(post.caption, length: 80)
-
-                p.mt-3.text-xs.text-slate-500.mt-auto
-                  | 投稿日:
-                  = l post.created_at, format: :short
-    - else
-      p.text-slate-500 投稿がまだありません。
+    = render "posts_grid", posts: @posts
 
     = render "pager", collection: @posts
 

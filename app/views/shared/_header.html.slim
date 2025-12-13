@@ -25,6 +25,14 @@ header.bg-violet-700.text-white.shadow
           / ドロップダウンメニュー
           ul.absolute.right-0.mt-2.w-40.bg-white.text-slate-800.rounded-md.shadow-lg.border.border-slate-200.z-50
             li
+              = link_to "新規投稿", new_blueprint_path,
+                class: "block px-4 py-2 text-slate-700 hover:bg-slate-100"
+
+            li
+              = link_to "マイページ", mine_posts_path,
+                class: "block px-4 py-2 text-slate-700 hover:bg-slate-100"
+
+            li
               = button_to "ログアウト",
                 destroy_user_session_path,
                 method: :delete,

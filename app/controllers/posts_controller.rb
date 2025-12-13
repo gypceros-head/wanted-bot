@@ -14,6 +14,9 @@ class PostsController < ApplicationController
   # edit/update ではフォーム表示用にBlueprintも参照
   before_action :set_blueprint, only: %i[edit update]
 
+  # 非公開投稿は所有者のみ閲覧可
+  before_action :ensure_viewable!, only: %i[show]
+
   def index
     # 公開投稿のみ + 新しい順 + 安定ソート
     @posts =
@@ -24,9 +27,16 @@ class PostsController < ApplicationController
         .per(20)
   end
 
+  def mine
+    @posts =
+      current_user.posts
+        .with_attached_image
+        .order(created_at: :desc, id: :desc)
+        .page(params[:page])
+        .per(20)
+  end
+
   def show
-    # 非公開投稿は所有者のみ閲覧可
-    ensure_viewable!
   end
 
   def new

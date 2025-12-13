@@ -15,6 +15,10 @@ Rails.application.routes.draw do
   root "home#index"
 
   resources :posts do
+    collection do
+      get :mine
+    end
+
     member do
       delete :destroy_image
       patch  :toggle_publish
