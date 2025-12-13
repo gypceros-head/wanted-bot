@@ -1,25 +1,36 @@
 class PostsController < ApplicationController
+  # 認証・権限
   before_action :authenticate_user!, except: %i[index show]
-  before_action :set_post, only: %i[show edit update destroy destroy_image]
-  before_action :authorize_owner!, only: %i[edit update destroy destroy_image]
+
+  # 対象投稿の取得
+  before_action :set_post, only: %i[show edit update destroy destroy_image toggle_publish]
+
+  # 投稿の所有者のみ操作可能
+  before_action :authorize_owner!, only: %i[edit update destroy destroy_image toggle_publish]
+
+  # new/create は投稿元Blueprintが必須
   before_action :require_blueprint!, only: %i[new create]
-  before_action :set_blueprint_for_form, only: %i[edit update]
+
+  # edit/update ではフォーム表示用にBlueprintも参照
+  before_action :set_blueprint, only: %i[edit update]
 
   def index
-    # 公開済みの投稿を新しい順に取得
-    @posts = Post.where(is_published: true).order(created_at: :desc)
+    # 公開投稿のみ（新しい順）
+    @posts = Post.published.order(created_at: :desc)
   end
 
   def show
-    # @post は set_post で取得済み
+    # 非公開投稿は所有者のみ閲覧可
+    ensure_viewable!
   end
 
   def new
-    @post = current_user.posts.build
     # @blueprint は require_blueprint! でセット済み
+    @post = current_user.posts.build
   end
 
   def create
+    # @blueprint は require_blueprint! でセット済み
     @post = current_user.posts.build(post_params)
 
     ActiveRecord::Base.transaction do
@@ -28,13 +39,16 @@ class PostsController < ApplicationController
       # Blueprint -> Post を確定
       @blueprint.update!(post: @post)
 
-      # BlueprintのプレビューPNGを投稿画像として添付
-      unless @blueprint.preview_image.attached?
-        raise ActiveRecord::RecordInvalid.new(@post), "Blueprint preview_image is missing"
-      end
-
-      @post.image.attach(@blueprint.preview_image.blob)
+      # BlueprintのプレビューPNGを投稿画像として流用
+      attach_blueprint_preview!
     end
+
+    redirect_to @post, notice: "投稿を作成しました。"
+  rescue ActiveRecord::RecordInvalid => e
+    # バリデーション/設計図紐づけ/添付処理のいずれかで失敗した場合
+    flash.now[:alert] = "投稿を作成できませんでした。入力内容を確認してください。"
+    Rails.logger.warn("[PostsController#create] #{e.class}: #{e.message}")
+    render :new, status: :unprocessable_entity
   end
 
   def edit
@@ -58,14 +72,19 @@ class PostsController < ApplicationController
   end
 
   def destroy_image
-    if @post.image.attached?
-      @post.image.purge
-    end
+    # 投稿画像のみ削除（投稿そのものは残す）
+    @post.image.purge if @post.image.attached?
 
     respond_to do |format|
       format.turbo_stream
       format.html { redirect_to edit_post_path(@post), notice: "画像を削除しました。" }
     end
+  end
+
+  def toggle_publish
+    # 公開/非公開の反転（所有者のみ）
+    @post.update!(is_published: !@post.is_published?)
+    redirect_to @post, notice: "公開設定を更新しました。"
   end
 
   private
@@ -74,14 +93,14 @@ class PostsController < ApplicationController
     @post = Post.find(params[:id])
   end
 
-  def set_blueprint_for_form
+  def set_blueprint
     @blueprint = @post.blueprint
   end
 
   def authorize_owner!
-    unless @post.user == current_user
-      redirect_to posts_path, alert: "この投稿を編集する権限がありません。"
-    end
+    return if @post.user == current_user
+
+    redirect_to posts_path, alert: "この投稿を編集する権限がありません。"
   end
 
   def require_blueprint!
@@ -98,6 +117,22 @@ class PostsController < ApplicationController
     if @blueprint.post_id.present?
       redirect_to @blueprint, alert: "この設計図は既に投稿済みです。"
     end
+  end
+
+  def ensure_viewable!
+    return if @post.is_published?
+    return if user_signed_in? && @post.user == current_user
+
+    head :not_found
+  end
+
+  def attach_blueprint_preview!
+    unless @blueprint.preview_image.attached?
+      # ここで例外にしてトランザクションをロールバックさせる
+      raise ActiveRecord::RecordInvalid.new(@post), "Blueprint preview_image is missing"
+    end
+
+    @post.image.attach(@blueprint.preview_image.blob)
   end
 
   def post_params

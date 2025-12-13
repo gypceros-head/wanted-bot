@@ -32,4 +32,6 @@ class Post < ApplicationRecord
 
   validates :title, presence: true
   validates :caption, presence: true
+
+  scope :published, -> { where(is_published: true) }
 end
