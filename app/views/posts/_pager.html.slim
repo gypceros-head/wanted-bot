@@ -1,0 +1,5 @@
+- return unless collection.respond_to?(:total_pages)
+- return if collection.total_pages <= 1
+
+.mt-6.flex.justify-center
+  = paginate collection
