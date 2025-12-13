@@ -23,6 +23,8 @@ Rails.application.routes.draw do
       delete :destroy_image
       patch  :toggle_publish
     end
+
+    resources :comments, only: %i[create destroy]
   end
 
   resources :blueprints, only: %i[new create edit update show] do
