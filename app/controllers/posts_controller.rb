@@ -1,7 +1,6 @@
 class PostsController < ApplicationController
-  # ==========
+
   # 認証・権限
-  # ==========
   before_action :authenticate_user!, except: %i[index show]
 
   # 対象投稿の取得
@@ -118,7 +117,6 @@ class PostsController < ApplicationController
     # 二重紐づけ防止（すでに投稿済みの設計図を再利用させない）
     if @blueprint.post_id.present?
       redirect_to @blueprint, alert: "この設計図は既に投稿済みです。"
-      return
     end
   end
 

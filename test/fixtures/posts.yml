@@ -31,3 +31,9 @@ two:
   title: MyString
   caption: MyText
   is_published: false
+
+published_one:
+  user: one
+  title: Published Post
+  caption: Published
+  is_published: true
