@@ -15,8 +15,13 @@ class PostsController < ApplicationController
   before_action :set_blueprint, only: %i[edit update]
 
   def index
-    # 公開投稿のみ（新しい順）
-    @posts = Post.published.order(created_at: :desc)
+    # 公開投稿のみ + 新しい順 + 安定ソート
+    @posts =
+      Post.published
+        .with_attached_image
+        .order(created_at: :desc, id: :desc)
+        .page(params[:page])
+        .per(20)
   end
 
   def show
