@@ -1,5 +1,4 @@
 class PostsController < ApplicationController
-
   # 認証・権限
   before_action :authenticate_user!, except: %i[index show]
 
