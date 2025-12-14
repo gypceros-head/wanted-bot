@@ -25,6 +25,7 @@ Rails.application.routes.draw do
     end
 
     resources :comments, only: %i[create destroy]
+    resource :bookmark, only: %i[create destroy]
   end
 
   resources :blueprints, only: %i[new create edit update show] do

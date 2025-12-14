@@ -37,3 +37,9 @@ published_one:
   title: Published Post
   caption: Published
   is_published: true
+
+published_two:
+  user: two
+  title: Published Post 2
+  caption: Published 2
+  is_published: true
