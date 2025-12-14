@@ -63,7 +63,18 @@
             / 操作ボタン群
             .mt-4.flex.flex-wrap.gap-3
               - if user_signed_in?
-                / ★ ブックマークボタンなど今後ここに追加
+                - if @bookmarked
+                  = button_to "ブックマーク解除",
+                              post_bookmark_path(@post),
+                              method: :delete,
+                              data: { turbo_confirm: "ブックマークを解除しますか？" },
+                              class: "inline-flex.items-center.px-3.py-2.rounded-md.border.border-slate-300.text-xs.text-slate-700.bg-white.hover:bg-slate-50"
+                - else
+                  = button_to "ブックマーク",
+                              post_bookmark_path(@post),
+                              method: :post,
+                              class: "inline-flex.items-center.px-3.py-2.rounded-md.bg-violet-600.text-xs.text-white.hover:bg-violet-700"
+
                 - if @post.user == current_user
                   = link_to "編集",
                             edit_post_path(@post),
@@ -74,6 +85,10 @@
                               method: :delete,
                               data: { turbo_confirm: "この投稿を削除しますか？（元に戻せません）" },
                               class: "inline-flex.items-center.px-3.py-2.rounded-md.border.border-red-300.text-xs.text-red-700.bg-red-50.hover:bg-red-100"
+              - else
+                p.text-xs.text-slate-500
+                  | ブックマークにはログインが必要です。
+                  = link_to "ログイン", new_user_session_path, class: "ml-1.text-violet-700.hover:underline"
 
           / ---- 下：コメントエリア（右下の小ウィンドウでスクロール）----
           .mt-2

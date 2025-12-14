@@ -18,14 +18,26 @@ class PostsController < ApplicationController
   before_action :ensure_viewable!, only: %i[show]
 
   def index
-    # 公開投稿のみ + 新しい順 + 安定ソート
-    @posts =
+    base =
       Post.published
-        .with_attached_image
-        .order(created_at: :desc, id: :desc)
-        .page(params[:page])
-        .per(20)
+          .with_attached_image
+          .order(created_at: :desc, id: :desc)
+
+    @posts =
+      if bookmarked_only?
+        base.joins(:bookmarks).where(bookmarks: { user_id: current_user.id })
+      else
+        base
+      end.page(params[:page]).per(20)
+
+    @bookmarked_post_ids =
+      if user_signed_in?
+        current_user.bookmarks.where(post_id: @posts.pluck(:id)).pluck(:post_id).to_set
+      else
+        Set.new
+      end
   end
+
 
   def mine
     @posts =
@@ -39,6 +51,8 @@ class PostsController < ApplicationController
   def show
     @comment = Comment.new
     @comments = @post.comments.includes(:user).order(:created_at)
+
+    @bookmarked = user_signed_in? && current_user.bookmarked_posts.exists?(@post.id)
   end
 
   def new
@@ -150,6 +164,10 @@ class PostsController < ApplicationController
     end
 
     @post.image.attach(@blueprint.preview_image.blob)
+  end
+
+  def bookmarked_only?
+    user_signed_in? && params[:bookmarked] == "1"
   end
 
   def post_params
