@@ -20,8 +20,20 @@
 #  fk_rails_...  (user_id => users.id)
 #
 class Comment < ApplicationRecord
+  include NgWord
+
   belongs_to :user
   belongs_to :post
 
   validates :body, presence: true, length: { maximum: 500 }
+  validate :body_must_not_include_ng_word
+
+  private
+
+  def body_must_not_include_ng_word
+    return if body.blank?
+    return unless include_ng_word?(body)
+
+    errors.add(:body, "に使用できない文字列が含まれています")
+  end
 end
