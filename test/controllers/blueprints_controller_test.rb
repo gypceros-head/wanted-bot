@@ -75,4 +75,29 @@ class BlueprintsControllerTest < ActionDispatch::IntegrationTest
     }
     assert_response :not_found
   end
+
+  test "owner can apply post image update for posted blueprint and redirect to post" do
+    sign_in @owner
+
+    posted = blueprints(:one) # post あり :contentReference[oaicite:1]{index=1}
+
+    patch blueprint_url(posted), params: {
+      blueprint: { name: "Updated" },
+      transition: "apply_post_image"
+    }
+
+    assert_redirected_to post_url(posted.post)
+  end
+
+  test "apply_post_image on draft blueprint does not error and follows default redirect" do
+    sign_in @owner
+
+    patch blueprint_url(@draft), params: {
+      blueprint: { name: "Updated" },
+      transition: "apply_post_image"
+    }
+
+    # draft は post なしなので default は new_post_path(..., publish: "0") へ
+    assert_redirected_to new_post_url(blueprint_id: @draft.id, publish: "0")
+  end
 end
