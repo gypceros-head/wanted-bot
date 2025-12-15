@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_12_12_115633) do
+ActiveRecord::Schema[7.2].define(version: 2025_12_15_052134) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -69,7 +69,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_12_115633) do
     t.string "dark_ink_color", default: "#222222", null: false
     t.string "paper_color", default: "#f8f0d8", null: false
     t.bigint "user_id", null: false
-    t.index ["post_id"], name: "index_blueprints_on_post_id"
+    t.index ["post_id"], name: "index_blueprints_on_post_id", unique: true
     t.index ["user_id"], name: "index_blueprints_on_user_id"
   end
 
@@ -107,7 +107,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_12_115633) do
     t.bigint "user_id", null: false
     t.string "title", null: false
     t.text "caption", null: false
-    t.boolean "is_published", default: true, null: false
+    t.boolean "is_published", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["created_at"], name: "index_posts_on_created_at"

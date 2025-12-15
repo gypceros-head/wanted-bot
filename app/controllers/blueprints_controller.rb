@@ -90,7 +90,6 @@ class BlueprintsController < ApplicationController
   def blueprint_params
     params.require(:blueprint).permit(
       :name,
-      :post_id,
       :light_ink_color,
       :dark_ink_color,
       :paper_color,
@@ -112,10 +111,12 @@ class BlueprintsController < ApplicationController
   end
 
   def after_save_redirect_path(blueprint)
-    if params[:transition] == "to_post"
-      new_post_path(blueprint_id: blueprint.id)
+    case params[:transition]
+    when "to_post_public"
+      new_post_path(blueprint_id: blueprint.id, publish: "1")
     else
-      edit_blueprint_path(blueprint)
+      # to_post_private / nil も含めて、デフォルトは非公開で投稿へ
+      new_post_path(blueprint_id: blueprint.id, publish: "0")
     end
   end
 
