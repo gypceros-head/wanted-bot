@@ -58,6 +58,7 @@ class PostsController < ApplicationController
   def new
     # @blueprint は require_blueprint! でセット済み
     @post = current_user.posts.build
+    @post.is_published = true if params[:publish] == "1"
   end
 
   def create

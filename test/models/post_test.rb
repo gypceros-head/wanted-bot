@@ -4,7 +4,7 @@
 #
 #  id           :bigint           not null, primary key
 #  caption      :text             not null
-#  is_published :boolean          default(TRUE), not null
+#  is_published :boolean          default(FALSE), not null
 #  title        :string           not null
 #  created_at   :datetime         not null
 #  updated_at   :datetime         not null

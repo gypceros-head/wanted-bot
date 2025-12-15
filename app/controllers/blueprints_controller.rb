@@ -15,6 +15,7 @@ class BlueprintsController < ApplicationController
 
   def create
     @blueprint = current_user.blueprints.new(blueprint_params)
+    @blueprint.name = "新しい手配書" if @blueprint.name.blank?
     assign_editor_state_from_param(@blueprint)
 
     if @blueprint.save
@@ -40,6 +41,12 @@ class BlueprintsController < ApplicationController
     if @blueprint.save
       attach_preview_image_from_param(@blueprint)
       @blueprint.sync_assemblies_from_editor_state!
+
+      if params[:transition] == "apply_post_image" && @blueprint.post.present?
+        sync_post_image_from_blueprint!(@blueprint)
+        return redirect_to post_path(@blueprint.post), notice: "投稿画像を更新しました"
+      end
+
       redirect_to after_save_redirect_path(@blueprint), notice: "設計図を更新しました"
     else
       render :edit, status: :unprocessable_entity
@@ -90,7 +97,6 @@ class BlueprintsController < ApplicationController
   def blueprint_params
     params.require(:blueprint).permit(
       :name,
-      :post_id,
       :light_ink_color,
       :dark_ink_color,
       :paper_color,
@@ -112,10 +118,13 @@ class BlueprintsController < ApplicationController
   end
 
   def after_save_redirect_path(blueprint)
-    if params[:transition] == "to_post"
-      new_post_path(blueprint_id: blueprint.id)
+    return edit_blueprint_path(blueprint) if blueprint.post.present?
+
+    case params[:transition]
+    when "to_post_public"
+      new_post_path(blueprint_id: blueprint.id, publish: "1")
     else
-      edit_blueprint_path(blueprint)
+      new_post_path(blueprint_id: blueprint.id, publish: "0")
     end
   end
 
@@ -151,5 +160,13 @@ class BlueprintsController < ApplicationController
     )
   rescue ArgumentError => e
     Rails.logger.warn("[BlueprintsController] preview_image_data decode failed: #{e.message}")
+  end
+
+  def sync_post_image_from_blueprint!(blueprint)
+    return unless blueprint.preview_image.attached?
+
+    post = blueprint.post
+    post.image.purge if post.image.attached?
+    post.image.attach(blueprint.preview_image.blob)
   end
 end

@@ -113,27 +113,13 @@ export default class extends Controller {
       this.stateFieldTarget.value = JSON.stringify(json);
     }
 
-    // ★ 2.5 PNG を生成して hidden_field に入れる（MVP: dataURLで送る）
+    // 3. PNG を生成して hidden_field に入れる（MVP: dataURLで送る）
     if (this.fabricCanvas && this.hasPreviewFieldTarget) {
       const dataUrl = this.fabricCanvas.toDataURL({
         format: "png",
         multiplier: 2
       });
       this.previewFieldTarget.value = dataUrl;
-    }
-
-    // 3. 設計図名の入力
-    if (this.hasNameFieldTarget) {
-      const currentName = this.nameFieldTarget.value || "新しい手配書";
-      const newName = window.prompt("設計図の名前を入力してください", currentName);
-
-      if (newName === null) {
-        event.preventDefault();
-        return;
-      }
-
-      this.nameFieldTarget.value =
-        newName.trim() === "" ? "新しい手配書" : newName.trim();
     }
   }
 
