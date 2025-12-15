@@ -20,6 +20,8 @@
 #  fk_rails_...  (user_id => users.id)
 #
 class Post < ApplicationRecord
+  include NgWord
+
   belongs_to :user
 
   has_many :comments, dependent: :destroy
@@ -32,6 +34,24 @@ class Post < ApplicationRecord
 
   validates :title, presence: true
   validates :caption, presence: true
+  validate :title_must_not_include_ng_word
+  validate :caption_must_not_include_ng_word
 
   scope :published, -> { where(is_published: true) }
+
+  private
+
+  def title_must_not_include_ng_word
+    return if title.blank?
+    return unless include_ng_word?(title)
+
+    errors.add(:title, "に使用できない文字列が含まれています")
+  end
+
+  def caption_must_not_include_ng_word
+    return if caption.blank?
+    return unless include_ng_word?(caption)
+
+    errors.add(:caption, "に使用できない文字列が含まれています")
+  end
 end
