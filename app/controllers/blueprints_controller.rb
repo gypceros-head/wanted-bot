@@ -15,6 +15,7 @@ class BlueprintsController < ApplicationController
 
   def create
     @blueprint = current_user.blueprints.new(blueprint_params)
+    @blueprint.name = "新しい手配書" if @blueprint.name.blank?
     assign_editor_state_from_param(@blueprint)
 
     if @blueprint.save
@@ -35,6 +36,7 @@ class BlueprintsController < ApplicationController
 
   def update
     @blueprint.assign_attributes(blueprint_params)
+    @blueprint.name = "新しい手配書" if @blueprint.name.blank?
     assign_editor_state_from_param(@blueprint)
 
     if @blueprint.save

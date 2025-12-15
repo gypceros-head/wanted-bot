@@ -36,10 +36,8 @@
                   post_path(blueprint.post),
                   class: "px-4 py-2 rounded bg-emerald-600 text-white text-sm hover:bg-emerald-700"
 
-  / 設計図名は hidden にして、JS から prompt で設定
-  = f.hidden_field :name,
-                   value: blueprint.name,
-                   data: { "editor--canvas-target": "nameField" }
+  / 設計図名はユーザー入力を廃止し、サーバ側のデフォルトを送る
+  = f.hidden_field :name, value: blueprint.name
 
   / editor_state も hidden で保持（JS と共有）
   = f.hidden_field :editor_state,
