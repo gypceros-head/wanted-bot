@@ -5,7 +5,6 @@ import SelectionBridge from "services/editor/selection_bridge";
 import SerializeService from "services/editor/serialize_service";
 import * as fabric from "fabric";
 
-
 // Connects to data-controller="editor--canvas"
 export default class extends Controller {
   static targets = ["canvas", "stateField", "nameField", "previewField"];
