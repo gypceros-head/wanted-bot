@@ -1,0 +1,18 @@
+- breadcrumb :posts
+
+.main-container
+  .container.mx-auto.px-4.py-8
+    h1.text-2xl.font-bold.mb-4 投稿一覧
+
+    - if user_signed_in?
+      .mb-4
+        - if params[:bookmarked] == "1"
+          = link_to "絞り込み解除", posts_path, class: "inline-flex items-center px-3 py-1 rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 text-xs"
+        - else
+          = link_to "ブックマークのみ表示", posts_path(bookmarked: 1), class: "inline-flex items-center px-3 py-1 rounded bg-violet-600 text-white hover:bg-violet-700 text-xs"
+
+    = render "pager", collection: @posts
+
+    = render "posts_grid", posts: @posts, bookmarked_post_ids: @bookmarked_post_ids
+
+    = render "pager", collection: @posts

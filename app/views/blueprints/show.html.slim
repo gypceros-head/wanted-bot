@@ -1,0 +1,9 @@
+h1 = @blueprint.name
+
+p ID: = @blueprint.id
+p インク（薄）: = @blueprint.light_ink_color
+p インク（濃）: = @blueprint.dark_ink_color
+p 紙色: = @blueprint.paper_color
+
+/ 将来ここにレンダリング済みの画像 or キャンバスの読み取り専用を出す
+= link_to "編集する", edit_blueprint_path(@blueprint), class: "btn btn-primary"

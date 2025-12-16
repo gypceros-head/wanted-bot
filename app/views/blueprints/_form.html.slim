@@ -1,0 +1,255 @@
+- blueprint = local_assigns[:blueprint]
+
+/ Stimulus: editor--canvas コントローラに submit を紐づけ
+= form_with model: blueprint,
+            local: true,
+            data: { controller: "editor--canvas",
+                    action: "submit->editor--canvas#handleSubmit" } do |f|
+
+  / ─────────────────────────────
+  / 上部ヘッダー（タイトル＋投稿導線）
+  /// ─────────────────────────────
+  .flex.items-center.justify-between.mb-4
+    .flex.items-center.gap-3
+      span.inline-flex.items-center.justify-center.rounded-full.bg-gray-100.px-3.py-1.text-xs.text-gray-600
+        | Blueprint ID:
+        = blueprint.id || "（未保存）"
+
+      span.text-sm.text-gray-500
+        | 手配書のレイアウトとパーツを編集します。
+
+      .flex.items-center.gap-2
+        - if blueprint.post_id.blank?
+          = f.button "非公開で投稿へ", type: "submit", name: "transition", value: "to_post_private", class: "px-4 py-2 rounded bg-slate-800 text-white text-sm hover:bg-slate-900"
+          = f.button "公開で投稿へ", type: "submit", name: "transition", value: "to_post_public", class: "px-4 py-2 rounded bg-violet-700 text-white text-sm hover:bg-violet-800"
+        - else
+          = f.button "画像の差し替えを申請", type: "submit", name: "transition", value: "apply_post_image", class: "px-4 py-2 rounded bg-amber-600 text-white text-sm hover:bg-amber-700"
+          = link_to "投稿を確認", post_path(blueprint.post), class: "px-4 py-2 rounded bg-emerald-600 text-white text-sm hover:bg-emerald-700"
+
+  / 設計図名はユーザー入力を廃止し、サーバ側のデフォルトを送る
+  = f.hidden_field :name, value: blueprint.name
+
+  / editor_state も hidden で保持（JS と共有）
+  = f.hidden_field :editor_state,
+                   value: blueprint.editor_state.to_json,
+                   data: { "editor--canvas-target": "stateField" }
+
+  / preview_image_data（PNG dataURL）を hidden で保持（JS と共有）
+  = f.hidden_field :preview_image_data,
+                   value: "",
+                   data: { "editor--canvas-target": "previewField" }
+
+  / ─────────────────────────────
+  / メイン 3カラムレイアウト
+  / 左：パーツリスト
+  / 中央：キャンバス
+  / 右：選択中パーツ 詳細＋レイヤー一覧
+  / ─────────────────────────────
+  .grid.grid-cols-1.xl:grid-cols-3.gap-4
+
+    / ── 左カラム：パーツリスト ──
+    .space-y-4.bg-white.shadow-sm.p-3[data-controller="editor--palette"]
+      h2.text-sm.font-semibold.text-gray-700.mb-2 パーツ一覧
+
+      - categories = @parts_by_category.keys.sort
+      - active_category = categories.first
+
+      / カテゴリタブ（横スクロール＋左右矢印）
+      .flex.items-center.gap-2.mb-3
+        / 左矢印（scrollLeft）
+        button type="button" class="px-2 py-1 border text-xs text-gray-500 hover:bg-gray-50" data-action="click->editor--palette#scrollLeft"
+          | ◁
+
+        / 横スクロール可能なタブコンテナ
+        .flex-1.overflow-x-auto.no-scrollbar[data-editor--palette-target="scrollContainer"]
+          .inline-flex.gap-1
+            - categories.each do |category|
+              - is_active = (category == active_category)
+              - btn_class = is_active \
+                ? "px-3 py-1 border text-xs bg-slate-800 text-white whitespace-nowrap" \
+                : "px-3 py-1 border text-xs bg-white text-gray-700 hover:bg-gray-100 whitespace-nowrap"
+
+              button type="button" class=btn_class data-category=category data-editor--palette-target="tab" data-action="click->editor--palette#select"
+                = category
+
+        / 右矢印（scrollRight）
+        button type="button" class="px-2 py-1 border text-xs text-gray-500 hover:bg-gray-50" data-action="click->editor--palette#scrollRight"
+          | ▷
+
+      / パーツリスト本体（カテゴリごとにパネル化）
+      div class="max-h-[420px] overflow-y-auto pr-1"
+        - categories.each do |category|
+          - parts = @parts_by_category[category]
+          - next if parts.blank?
+
+          - is_active_panel = (category == active_category)
+          - panel_class = is_active_panel ? "space-y-2" : "space-y-2 hidden"
+
+          / 各カテゴリのパネル（最初以外は hidden で非表示）
+          div class=panel_class data-editor--palette-target="panel" data-category=category
+            / サムネイルグリッド（横4列・中央寄せ）
+            .flex.justify-center
+              .grid.grid-cols-4.gap-2
+                - parts.each do |part|
+                  button(
+                    type="button"
+                    class="relative w-24 h-24 border border-gray-300 bg-white hover:bg-gray-50 flex items-center justify-center"
+                    data-part-id=part.id
+                    data-part-asset-url=asset_path(part.asset_path)
+                    data-part-category=category
+                    title=part.name
+                    data-action="click->editor--palette#insert"
+                  )
+                    .w-5/6.h-5/6.flex.items-center.justify-center
+                      = inline_svg_tag part.asset_path,
+                        aria: { hidden: true },
+                        class: "w-full h-full svg-part-thumb"
+
+    / ── 中央カラム：キャンバス ──
+    .flex.flex-col.items-center
+      / キャンバスを中央寄せ
+      .bg-gray-50.rounded-lg.shadow-inner.p-4.inline-flex.items-center.justify-center
+        canvas[
+          data-editor--canvas-target="canvas"
+          data-editor--canvas-paper-color-value=blueprint.paper_color
+          width="480"
+          height="640"
+          class="border border-gray-300 shadow-sm"
+        ]
+
+      / キャンバス下に簡易ステータス（ダミー）
+      .mt-3.flex.gap-4.text-xs.text-gray-600
+        span
+          | キャンバス: 480×640 px
+        span
+          | グリッド: 20px
+        span
+          | ズーム: 100%
+
+      / 将来：ここに「ズーム」「グリッド表示」などのボタンを配置しても良い
+
+    / ── 右カラム：選択中パーツ詳細＋レイヤー一覧 ──
+    .space-y-4
+      / 選択中パーツ詳細（実装版）
+      .bg-white.border.border-gray-300.p-3 data-controller="editor--selection"
+        h2.text-sm.font-semibold.text-gray-700.mb-2 選択中パーツ
+
+        / 未選択時メッセージ
+        p.text-xs.text-gray-500.mb-2 data-editor--selection-target="emptyMessage"
+          | キャンバス上のパーツをクリックすると、ここに詳細が表示されます。
+
+        / 詳細パネル（選択中のみ表示）
+        dl.grid.grid-cols-2.gap-x-3.gap-y-2.text-gray-700 class="text-[11px]" data-editor--selection-target="detailPanel"
+          / パーツ名 / 部位
+          dt.text-gray-500 パーツ / 部位
+          dd.font-mono
+            span data-editor--selection-target="partName"
+              | GestaltEyes01
+            span.text-xs.text-gray-500.ml-1 data-editor--selection-target="partCategory"
+              | / eye
+
+          / X 座標
+          dt.text-gray-500 X座標 (px)
+          dd
+            .flex.items-center.gap-1
+              button type="button" class="px-1 py-0.5 border text-[10px]" data-action="click->editor--selection#decrementX"
+                | ＜
+              input type="number" step="1" class="w-16 px-1 py-0.5 border text-right font-mono text-[11px]" data-editor--selection-target="xInput" data-action="keydown->editor--selection#suppressEnter change->editor--selection#updateXFromInput blur->editor--selection#updateXFromInput"
+              button type="button" class="px-1 py-0.5 border text-[10px]" data-action="click->editor--selection#incrementX"
+                | ＞
+
+          / Y 座標
+          dt.text-gray-500 Y座標 (px)
+          dd
+            .flex.items-center.gap-1
+              button type="button" class="px-1 py-0.5 border text-[10px]" data-action="click->editor--selection#decrementY"
+                | ＜
+              input type="number" step="1" class="w-16 px-1 py-0.5 border text-right font-mono text-[11px]" data-editor--selection-target="yInput" data-action="keydown->editor--selection#suppressEnter change->editor--selection#updateYFromInput blur->editor--selection#updateYFromInput"
+              button type="button" class="px-1 py-0.5 border text-[10px]" data-action="click->editor--selection#incrementY"
+                | ＞
+
+          / 回転
+          dt.text-gray-500 回転 (°)
+          dd
+            .flex.items-center.gap-1
+              button type="button" class="px-1 py-0.5 border text-[10px]" data-action="click->editor--selection#decrementAngle"
+                | ＜
+              input type="number" step="1" class="w-16 px-1 py-0.5 border text-right font-mono text-[11px]" data-editor--selection-target="angleInput" data-action="keydown->editor--selection#suppressEnter change->editor--selection#updateAngleFromInput blur->editor--selection#updateAngleFromInput"
+              button type="button" class="px-1 py-0.5 border text-[10px]" data-action="click->editor--selection#incrementAngle"
+                | ＞
+
+          / 拡大率 X
+          dt.text-gray-500 拡大率 X (%)
+          dd
+            .flex.items-center.gap-1
+              button type="button" class="px-1 py-0.5 border text-[10px]" data-action="click->editor--selection#decrementScaleX"
+                | ＜
+              input type="number" step="1" class="w-16 px-1 py-0.5 border text-right font-mono text-[11px]" data-editor--selection-target="scaleXInput" data-action="keydown->editor--selection#suppressEnter change->editor--selection#updateScaleXFromInput blur->editor--selection#updateScaleXFromInput"
+              button type="button" class="px-1 py-0.5 border text-[10px]" data-action="click->editor--selection#incrementScaleX"
+                | ＞
+
+          / 拡大率 Y
+          dt.text-gray-500 拡大率 Y (%)
+          dd
+            .flex.items-center.gap-1
+              button type="button" class="px-1 py-0.5 border text-[10px]" data-action="click->editor--selection#decrementScaleY"
+                | ＜
+              input type="number" step="1" class="w-16 px-1 py-0.5 border text-right font-mono text-[11px]" data-editor--selection-target="scaleYInput" data-action="keydown->editor--selection#suppressEnter change->editor--selection#updateScaleYFromInput blur->editor--selection#updateScaleYFromInput"
+              button type="button" class="px-1 py-0.5 border text-[10px]" data-action="click->editor--selection#incrementScaleY"
+                | ＞
+
+      / ロック系トグル（将来ここに Stimulus action をつける）
+      .mt-3.flex.flex-wrap.gap-2
+        button type="button" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100 text-[11px]"
+          | 移動ロック
+        button type="button" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100 text-[11px]"
+          | 拡大ロック
+        button type="button" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100 text-[11px]"
+          | 回転ロック
+
+      / レイヤー一覧（実データ）
+      - assemblies = blueprint.assemblies.includes(:part).order(layer_order: :desc)
+      .bg-white.rounded-lg.shadow-sm.p-3
+        h2.text-sm.font-semibold.text-gray-700.mb-2 レイヤー
+
+        - if assemblies.empty?
+          p.text-xs.text-gray-500
+            | まだ保存されたパーツがありません。「保存する」とキャンバス上のパーツがレイヤーとして表示されます。
+
+        - else
+          .flex.justify-between.items-center.mb-2
+            span.text-gray-600 class="text-[11px]"
+              | レイヤー順やパーツ情報の一覧です（操作UIは今後追加予定）。
+
+            .flex.gap-1
+              button type="button" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100"
+                | すべて表示
+              button type="button" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100"
+                | すべてロック
+
+        / レイヤー行一覧（Stimulus の list ターゲット）
+        .space-y-1 class="text-[11px]" data-controller="editor--layers" data-editor--layers-target="list"
+          - assemblies.each do |assembly|
+            - part = assembly.part
+
+            .flex.items-center.gap-2.p-2.rounded.border.border-gray-200.bg-white.hover:bg-gray-50.cursor-pointer data-controller="editor--layers" data-editor--layers-index-value=assembly.layer_order data-action="click->editor--layers#select"
+
+              / 可視 / 非表示トグル
+              input type="checkbox" checked=true class="h-3 w-3 text-blue-600 rounded border-gray-300" data-editor--layers-target="visibilityToggle" data-action="click->editor--layers#toggleVisible"
+
+              .flex-1
+                p.font-semibold.text-gray-800
+                  = "レイヤー #{assembly.layer_order + 1}：#{part&.category.presence || 'unknown'} / #{part&.name.presence || "Part ##{assembly.part_id}"}"
+                p.text-gray-500
+                  = "part_id: ##{assembly.part_id} / tone: #{assembly.tone_code.presence || 'neutral'}"
+
+              .flex.flex-col.gap-1
+                button type="button" class="px-1 py-0.5 rounded border border-gray-300 hover:bg-gray-100" data-action="click->editor--layers#moveUp"
+                  | ▲
+
+                button type="button" class="px-1 py-0.5 rounded border border-gray-300 hover:bg-gray-100" data-action="click->editor--layers#moveDown"
+                  | ▼
+
+              / 削除ボタン（1 レイヤー 1 つ）
+              button type="button" class="ml-1 px-2 py-1 rounded border border-red-300 text-red-600 hover:bg-red-50 text-[11px]" data-action="click->editor--layers#remove"
+                  | 削除

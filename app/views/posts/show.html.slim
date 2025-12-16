@@ -1,0 +1,140 @@
+- breadcrumb :post, @post
+
+.main-container
+  .container.mx-auto.px-4.py-8
+    - if @post
+      .grid.grid-cols-1.lg:grid-cols-2.gap-8.items-start
+        / =======================
+        / 左カラム：画像エリア
+        / =======================
+        .bg-slate-50.rounded-xl.border.border-slate-200.p-4.flex.justify-center
+          - if @post.image.attached?
+            .max-w-full
+              = image_tag @post.image, class: "max-h-[600px] w-auto h-auto rounded-lg border border-slate-200"
+
+              .mt-4
+                = link_to "画像をダウンロード",
+                          url_for(@post.image),
+                          download: true,
+                          class: "inline-flex items-center px-4 py-2 rounded-md border border-slate-300 text-sm text-slate-700 bg-white hover:bg-slate-50"
+          - else
+            .flex.items-center.justify-center.w-full.h-64.text-slate-400.text-sm
+              | 画像が登録されていません
+
+        / =======================
+        / 右カラム：上＝作品情報 / 下＝コメント
+        / =======================
+        .flex.flex-col.h-full.gap-6
+          / ---- 上：タイトル・メタ情報・キャプション・操作 ----
+          .flex-1.flex.flex-col.gap-4
+            / タイトル
+            h1.text-2xl.font-bold = @post.title
+
+            / キャプション
+            - if @post.caption.present?
+              p.mt-3.text-slate-700.whitespace-pre-wrap.text-sm = @post.caption
+
+            / メタ情報
+            .space-y-2.text-sm.text-slate-500
+              p
+                | 投稿日:
+                = l @post.created_at, format: :short
+                - if @post.created_at != @post.updated_at
+                  span.ml-2
+                    | （最終更新:
+                    = l @post.updated_at, format: :short
+                    | ）
+
+              p
+                | 投稿者:
+                = @post.user.name
+
+              - if user_signed_in? && @post.user == current_user
+                .flex.items-center.gap-2
+                  - if @post.is_published?
+                    .inline-flex.items-center.text-xs.font-medium.rounded-full.px-3.py-1.bg-emerald-50.text-emerald-700
+                      | 公開中
+                    = button_to "非公開にする", toggle_publish_post_path(@post), method: :patch, class: "text-xs px-3 py-1 rounded border border-slate-300 text-slate-700 hover:bg-slate-50"
+                  - else
+                    .inline-flex.items-center.text-xs.font-medium.rounded-full.px-3.py-1.bg-slate-100.text-slate-700
+                      | 非公開（自分にのみ表示）
+                    = button_to "公開する", toggle_publish_post_path(@post), method: :patch, class: "text-xs px-3 py-1 rounded bg-emerald-600 text-white hover:bg-emerald-700"
+
+            / 操作ボタン群
+            .mt-4.flex.flex-wrap.gap-3
+              - if user_signed_in?
+                - if @bookmarked
+                  = button_to "ブックマーク解除",
+                              post_bookmark_path(@post),
+                              method: :delete,
+                              data: { turbo_confirm: "ブックマークを解除しますか？" },
+                              class: "inline-flex.items-center.px-3.py-2.rounded-md.border.border-slate-300.text-xs.text-slate-700.bg-white.hover:bg-slate-50"
+                - else
+                  = button_to "ブックマーク",
+                              post_bookmark_path(@post),
+                              method: :post,
+                              class: "inline-flex.items-center.px-3.py-2.rounded-md.bg-violet-600.text-xs.text-white.hover:bg-violet-700"
+
+                - if @post.user == current_user
+                  = link_to "編集",
+                            edit_post_path(@post),
+                            class: "inline-flex.items-center.px-3.py-2.rounded-md.border.border-slate-300.text-xs.text-slate-700.bg-white.hover:bg-slate-50"
+
+                  = button_to "投稿を削除する",
+                              post_path(@post),
+                              method: :delete,
+                              data: { turbo_confirm: "この投稿を削除しますか？（元に戻せません）" },
+                              class: "inline-flex.items-center.px-3.py-2.rounded-md.border.border-red-300.text-xs.text-red-700.bg-red-50.hover:bg-red-100"
+              - else
+                p.text-xs.text-slate-500
+                  | ブックマークにはログインが必要です。
+                  = link_to "ログイン", new_user_session_path, class: "ml-1.text-violet-700.hover:underline"
+
+          / ---- 下：コメントエリア（右下の小ウィンドウでスクロール）----
+          .mt-2
+            h2.text-base.font-semibold.text-slate-900.mb-2 コメント
+
+            / コメント一覧（スクロール可能ウィンドウ）
+            .rounded-lg.border.border-slate-200.bg-white.p-3.text-sm.text-slate-700.h-64.overflow-y-auto.space-y-3
+              - if @comments.present?
+                - @comments.each do |comment|
+                  .border-b.border-slate-100.pb-2.last:border-none
+                    .flex.items-start.justify-between.gap-3
+                      .min-w-0
+                        p.font-semibold.text-xs.text-slate-500.truncate
+                          = comment.user.name
+                          span.ml-2
+                            = l comment.created_at, format: :short
+                        p.text-xs.mt-1.whitespace-pre-wrap.break-words = comment.body
+
+                      - confirm_body = truncate(comment.body.to_s.squish, length: 40)
+                      - if user_signed_in? && comment.user == current_user
+                        = button_to "削除",
+                                    post_comment_path(@post, comment),
+                                    method: :delete,
+                                    data: { turbo_confirm: "「#{confirm_body}」を削除しますか？" },
+                                    class: "shrink-0 inline-flex items-center px-2 py-1 rounded border border-red-300 text-[11px] text-red-700 bg-red-50 hover:bg-red-100"
+              - else
+                p.text-xs.text-slate-500
+                  | まだコメントはありません。
+
+            / コメント投稿フォーム
+            - if user_signed_in?
+              .mt-3.rounded-lg.border.border-slate-200.bg-slate-50.p-3
+                h3.text-xs.font-semibold.text-slate-900.mb-2 コメントを投稿
+
+                - if flash[:alert].present?
+                p.text-xs.text-red-700.mb-2 = flash[:alert]
+
+                = form_with model: [@post, @comment], local: true do |f|
+                  = f.text_area :body, rows: 3, class: "w-full rounded-md border border-slate-300 bg-white p-2 text-xs", placeholder: "コメントを入力"
+
+                  .mt-2
+                    = f.submit "送信", class: "inline-flex items-center px-3 py-1 rounded bg-violet-600 text-white hover:bg-violet-700 text-[11px]"
+            - else
+              p.text-xs.text-slate-500.mt-2
+                | コメントをするにはログインが必要です。
+                = link_to "ログイン", new_user_session_path, class: "ml-1.text-violet-700.hover:underline"
+
+    - else
+      p.text-red-600 投稿が見つかりませんでした。

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="364"
+   height="174"
+   viewBox="0 0 364 174"
+   version="1.1"
+   id="svg1"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1" />
+  <g
+     id="layer1"
+     style="display:inline"
+     transform="translate(-138,-68)">
+    <path
+       style="fill:#ff0101;fill-opacity:1;stroke:#000000;stroke-width:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 140,200 v 40 H 500 V 200 L 480,80 H 160 Z"
+       id="path7" />
+    <path
+       style="fill:#0101ff;fill-opacity:1;stroke:#000000;stroke-width:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 140,200 H 500"
+       id="path8" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 160,80 20,120 v 40"
+       id="path9" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 480,80 -20,120 v 40"
+       id="path10" />
+    <path
+       style="fill:#ff0101;fill-opacity:1;stroke:#000000;stroke-width:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 240,70 v 80 l 20,10 h 120 l 20,-10 V 70 H 370 V 80 H 270 V 70 Z"
+       id="path13" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 240,150 20,-10 h 120 l 20,10"
+       id="path14" />
+  </g>
+</svg>

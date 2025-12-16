@@ -1,0 +1,49 @@
+/ app/views/shared/_header.html.slim
+header.bg-violet-700.text-white.shadow
+  .container.mx-auto.px-4.py-3.flex.items-center.justify-between
+
+    / 左側：ロゴ＋サービス名
+    .flex.items-center.space-x-2
+      = link_to root_path, class: "flex items-center space-x-2" do
+        = image_tag "logo.png", alt: "WANTED BOT ロゴ", class: "h-10 w-auto inline-block"
+        span.font-semibold.text-lg ロボット・イン・モンタージュ
+
+    / 右側：ナビゲーション
+    .flex.items-center.space-x-4.text-sm
+
+      = link_to "投稿一覧（仮）", posts_path, class: "hover:underline"
+
+      - if user_signed_in?
+
+        / ▼ 名前をクリックすると開くドロップダウン
+        details.relative
+          summary.flex.items-center.cursor-pointer.list-none
+            span.text-xs.mr-2 ログイン中
+            span.mr-1.font-semibold = current_user.name
+            span.text-xs ▼
+
+          / ドロップダウンメニュー
+          ul.absolute.right-0.mt-2.w-40.bg-white.text-slate-800.rounded-md.shadow-lg.border.border-slate-200.z-50
+            li
+              = link_to "新規投稿", new_blueprint_path,
+                class: "block px-4 py-2 text-slate-700 hover:bg-slate-100"
+
+            li
+              = link_to "マイページ", mine_posts_path,
+                class: "block px-4 py-2 text-slate-700 hover:bg-slate-100"
+
+            li
+              = button_to "ログアウト",
+                destroy_user_session_path,
+                method: :delete,
+                data: { turbo_confirm: "ログアウトしますか？" },
+                class: "block w-full text-left px-4 py-2 text-sm hover:bg-slate-100"
+
+      - else
+        = link_to "ログイン",
+          new_user_session_path,
+          class: "bg-violet-500 hover:bg-violet-600 text-white px-3 py-1 rounded"
+
+        = link_to "新規登録",
+          new_user_registration_path,
+          class: "border border-white/80 hover:bg-white hover:text-violet-700 px-3 py-1 rounded"

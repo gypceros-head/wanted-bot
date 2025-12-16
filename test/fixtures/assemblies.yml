@@ -1,0 +1,48 @@
+# == Schema Information
+#
+# Table name: assemblies
+#
+#  id           :bigint           not null, primary key
+#  layer_order  :integer          not null
+#  position_x   :float            not null
+#  position_y   :float            not null
+#  rotation_deg :float            not null
+#  scale_x      :float            not null
+#  scale_y      :float            not null
+#  tone_code    :integer          default("neutral"), not null
+#  created_at   :datetime         not null
+#  updated_at   :datetime         not null
+#  blueprint_id :bigint           not null
+#  part_id      :bigint           not null
+#
+# Indexes
+#
+#  index_assemblies_on_blueprint_id  (blueprint_id)
+#  index_assemblies_on_part_id       (part_id)
+#  index_assemblies_on_tone_code     (tone_code)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (blueprint_id => blueprints.id)
+#  fk_rails_...  (part_id => parts.id)
+#
+
+one:
+  blueprint: one
+  part: one
+  layer_order: 1
+  position_x: 1.5
+  position_y: 1.5
+  scale_x: 1.5
+  scale_y: 1.5
+  rotation_deg: 1.5
+
+two:
+  blueprint: two
+  part: two
+  layer_order: 1
+  position_x: 1.5
+  position_y: 1.5
+  scale_x: 1.5
+  scale_y: 1.5
+  rotation_deg: 1.5

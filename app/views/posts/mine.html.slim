@@ -1,0 +1,11 @@
+- breadcrumb :posts
+
+.main-container
+  .container.mx-auto.px-4.py-8
+    h1.text-2xl.font-bold.mb-4 自作物一覧
+
+    = render "pager", collection: @posts
+
+    = render "posts_grid", posts: @posts, show_status: true
+
+    = render "pager", collection: @posts

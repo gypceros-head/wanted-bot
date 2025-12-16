@@ -1,0 +1,13 @@
+.main-container
+  .container.mx-auto.px-4.py-8
+    h1.text-2xl.font-bold.mb-4 投稿を編集
+
+    .flex.flex-col.gap-6.lg:flex-row.lg:items-start
+      .flex-none.w-fit
+        = render "image_preview", post: @post, blueprint: @post.blueprint
+
+      .flex-1.min-w-0
+        = render "form"
+
+        .mt-4
+          = link_to "戻る", @post, class: "text-violet-700 hover:underline text-sm"
