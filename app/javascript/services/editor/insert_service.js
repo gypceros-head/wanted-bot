@@ -139,7 +139,7 @@ export default class InsertService {
 
       const patch = {
         strokeUniform: true,
-        objectCaching: false
+        // objectCaching: false
       };
 
       if (hasFill) {

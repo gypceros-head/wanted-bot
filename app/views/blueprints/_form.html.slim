@@ -7,51 +7,20 @@
                     action: "submit->editor--canvas#handleSubmit" } do |f|
 
   / ─────────────────────────────
-  / 上部ヘッダー（タイトル＋投稿導線）
-  /// ─────────────────────────────
-  .flex.items-center.justify-between.mb-4
-    .flex.items-center.gap-3
-      span.inline-flex.items-center.justify-center.rounded-full.bg-gray-100.px-3.py-1.text-xs.text-gray-600
-        | Blueprint ID:
-        = blueprint.id || "（未保存）"
-
-      span.text-sm.text-gray-500
-        | 手配書のレイアウトとパーツを編集します。
-
-      .flex.items-center.gap-2
-        - if blueprint.post_id.blank?
-          = f.button "非公開で投稿へ", type: "submit", name: "transition", value: "to_post_private", class: "px-4 py-2 rounded bg-slate-800 text-white text-sm hover:bg-slate-900"
-          = f.button "公開で投稿へ", type: "submit", name: "transition", value: "to_post_public", class: "px-4 py-2 rounded bg-violet-700 text-white text-sm hover:bg-violet-800"
-        - else
-          = f.button "画像の差し替えを申請", type: "submit", name: "transition", value: "apply_post_image", class: "px-4 py-2 rounded bg-amber-600 text-white text-sm hover:bg-amber-700"
-          = link_to "投稿を確認", post_path(blueprint.post), class: "px-4 py-2 rounded bg-emerald-600 text-white text-sm hover:bg-emerald-700"
-
-  / 設計図名はユーザー入力を廃止し、サーバ側のデフォルトを送る
-  = f.hidden_field :name, value: blueprint.name
-
-  / editor_state も hidden で保持（JS と共有）
-  = f.hidden_field :editor_state,
-                   value: blueprint.editor_state.to_json,
-                   data: { "editor--canvas-target": "stateField" }
-
-  / preview_image_data（PNG dataURL）を hidden で保持（JS と共有）
-  = f.hidden_field :preview_image_data,
-                   value: "",
-                   data: { "editor--canvas-target": "previewField" }
-
-  / ─────────────────────────────
   / メイン 3カラムレイアウト
   / 左：パーツリスト
-  / 中央：キャンバス
+  / 中央：キャンバス＋送信ボタン
   / 右：選択中パーツ 詳細＋レイヤー一覧
   / ─────────────────────────────
   .grid.grid-cols-1.xl:grid-cols-3.gap-4
 
+    / ──────────────────────────────
     / ── 左カラム：パーツリスト ──
+    / ──────────────────────────────
     .space-y-4.bg-white.shadow-sm.p-3[data-controller="editor--palette"]
       h2.text-sm.font-semibold.text-gray-700.mb-2 パーツ一覧
 
-      - categories = @parts_by_category.keys.sort
+      - categories = @parts_by_category.keys
       - active_category = categories.first
 
       / カテゴリタブ（横スクロール＋左右矢印）
@@ -105,8 +74,10 @@
                         aria: { hidden: true },
                         class: "w-full h-full svg-part-thumb"
 
-    / ── 中央カラム：キャンバス ──
-    .flex.flex-col.items-center
+    / ─────────────────────────────────────────
+    / ── 中央カラム：キャンバス＋送信ボタン ──
+    / ─────────────────────────────────────────
+    .space-y-4.flex.flex-col.items-center
       / キャンバスを中央寄せ
       .bg-gray-50.rounded-lg.shadow-inner.p-4.inline-flex.items-center.justify-center
         canvas[
@@ -117,18 +88,34 @@
           class="border border-gray-300 shadow-sm"
         ]
 
-      / キャンバス下に簡易ステータス（ダミー）
-      .mt-3.flex.gap-4.text-xs.text-gray-600
-        span
-          | キャンバス: 480×640 px
-        span
-          | グリッド: 20px
-        span
-          | ズーム: 100%
+      / キャンバス下に送信ボタン
+      .flex.items-center.mb-4
+        .flex.items-center.gap-3
+          - if blueprint.post_id.blank?
+            = f.button "非公開で投稿へ", type: "submit", name: "transition", value: "to_post_private", class: "px-4 py-2 rounded bg-slate-800 text-white text-sm hover:bg-slate-900"
+            = f.button "公開で投稿へ", type: "submit", name: "transition", value: "to_post_public", class: "px-4 py-2 rounded bg-violet-700 text-white text-sm hover:bg-violet-800"
+          - else
+            = f.button "画像の差し替えを申請", type: "submit", name: "transition", value: "apply_post_image", class: "px-4 py-2 rounded bg-amber-600 text-white text-sm hover:bg-amber-700"
+            = link_to "編集をやめる", post_path(blueprint.post), class: "px-4 py-2 rounded bg-emerald-600 text-white text-sm hover:bg-emerald-700"
+
+      / 設計図名はユーザー入力を廃止し、サーバ側のデフォルトを送る
+      = f.hidden_field :name, value: blueprint.name
+
+      / editor_state も hidden で保持（JS と共有）
+      = f.hidden_field :editor_state,
+                      value: blueprint.editor_state.to_json,
+                      data: { "editor--canvas-target": "stateField" }
+
+      / preview_image_data（PNG dataURL）を hidden で保持（JS と共有）
+      = f.hidden_field :preview_image_data,
+                      value: "",
+                      data: { "editor--canvas-target": "previewField" }
 
       / 将来：ここに「ズーム」「グリッド表示」などのボタンを配置しても良い
 
+    / ────────────────────────────────────────────────
     / ── 右カラム：選択中パーツ詳細＋レイヤー一覧 ──
+    / ────────────────────────────────────────────────
     .space-y-4
       / 選択中パーツ詳細（実装版）
       .bg-white.border.border-gray-300.p-3 data-controller="editor--selection"
@@ -198,34 +185,13 @@
               button type="button" class="px-1 py-0.5 border text-[10px]" data-action="click->editor--selection#incrementScaleY"
                 | ＞
 
-      / ロック系トグル（将来ここに Stimulus action をつける）
-      .mt-3.flex.flex-wrap.gap-2
-        button type="button" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100 text-[11px]"
-          | 移動ロック
-        button type="button" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100 text-[11px]"
-          | 拡大ロック
-        button type="button" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100 text-[11px]"
-          | 回転ロック
-
       / レイヤー一覧（実データ）
       - assemblies = blueprint.assemblies.includes(:part).order(layer_order: :desc)
-      .bg-white.rounded-lg.shadow-sm.p-3
+      .bg-white.shadow-sm.p-3
         h2.text-sm.font-semibold.text-gray-700.mb-2 レイヤー
 
-        - if assemblies.empty?
-          p.text-xs.text-gray-500
-            | まだ保存されたパーツがありません。「保存する」とキャンバス上のパーツがレイヤーとして表示されます。
-
-        - else
-          .flex.justify-between.items-center.mb-2
-            span.text-gray-600 class="text-[11px]"
-              | レイヤー順やパーツ情報の一覧です（操作UIは今後追加予定）。
-
-            .flex.gap-1
-              button type="button" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100"
-                | すべて表示
-              button type="button" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100"
-                | すべてロック
+        span.text-gray-600 class="text-[11px]"
+          | レイヤー順やパーツ情報の一覧です。
 
         / レイヤー行一覧（Stimulus の list ターゲット）
         .space-y-1 class="text-[11px]" data-controller="editor--layers" data-editor--layers-target="list"

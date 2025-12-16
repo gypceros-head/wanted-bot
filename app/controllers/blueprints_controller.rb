@@ -87,9 +87,14 @@ class BlueprintsController < ApplicationController
   end
 
   def set_parts
-    # Part をカテゴリ順・名前順で並べつつ、カテゴリごとにグループ化
-    @parts_by_category = Part.order(:category, :name).group_by(&:category)
-    # 例: { "eye" => [#<Part ...>, ...], "mouth" => [...], ... }
+    ordered_categories = Part.category_order
+
+    @parts_by_category =
+      Part
+        .order(:name)
+        .group_by(&:category)
+        .sort_by { |category, _| ordered_categories.index(category) }
+        .to_h
   end
 
   # editor_state は hidden_field から JSON 文字列で飛んでくる想定なので、
