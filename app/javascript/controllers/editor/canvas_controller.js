@@ -76,11 +76,22 @@ export default class extends Controller {
   // =======================================
 
   setupCanvas(paperColor) {
+    Object.assign(fabric.FabricObject.ownDefaults, {
+      borderColor: "#db7093",
+      // cornerColor: "#db7093",
+      cornerStrokeColor: "#db7093",
+      cornerStyle: "square",
+      transparentCorners: true,
+      padding: 4
+    });
+
     this.fabricCanvas = new fabric.Canvas(this.canvasTarget, {
       width: 480,
       height: 640,
       backgroundColor: paperColor,
-      preserveObjectStacking: true
+      preserveObjectStacking: true,
+      perPixelTargetFind: true,
+      targetFindTolerance: 0
     });
 
     // 念のため直接プロパティもセット

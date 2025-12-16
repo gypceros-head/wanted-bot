@@ -68,6 +68,10 @@ class Part < ApplicationRecord
     CATEGORY_LABELS[category] || category
   end
 
+  def self.category_order
+    categories.keys
+  end
+
   enum :default_tone_code, {
     primary_full:   0, # 赤
     primary_tint:   1, # 赤 + 白
