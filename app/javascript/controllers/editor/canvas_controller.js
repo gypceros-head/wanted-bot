@@ -1,8 +1,8 @@
 import { Controller } from "@hotwired/stimulus";
-import InsertService from "../../services/editor/insert_service";
-import LayerService from "../../services/editor/layer_service";
-import SelectionBridge from "../../services/editor/selection_bridge";
-import SerializeService from "../../services/editor/serialize_service";
+import InsertService from "services/editor/insert_service";
+import LayerService from "services/editor/layer_service";
+import SelectionBridge from "services/editor/selection_bridge";
+import SerializeService from "services/editor/serialize_service";
 import * as fabric from "fabric";
 
 // Connects to data-controller="editor--canvas"

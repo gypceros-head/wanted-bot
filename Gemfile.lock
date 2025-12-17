@@ -80,6 +80,25 @@ GEM
       activerecord (>= 3.2, < 8.0)
       rake (>= 10.4, < 14.0)
     ast (2.4.3)
+    aws-eventstream (1.4.0)
+    aws-partitions (1.1194.0)
+    aws-sdk-core (3.239.2)
+      aws-eventstream (~> 1, >= 1.3.0)
+      aws-partitions (~> 1, >= 1.992.0)
+      aws-sigv4 (~> 1.9)
+      base64
+      bigdecimal
+      jmespath (~> 1, >= 1.6.1)
+      logger
+    aws-sdk-kms (1.118.0)
+      aws-sdk-core (~> 3, >= 3.239.1)
+      aws-sigv4 (~> 1.5)
+    aws-sdk-s3 (1.207.0)
+      aws-sdk-core (~> 3, >= 3.234.0)
+      aws-sdk-kms (~> 1)
+      aws-sigv4 (~> 1.5)
+    aws-sigv4 (1.12.1)
+      aws-eventstream (~> 1, >= 1.0.2)
     base64 (0.3.0)
     bcrypt (3.1.20)
     benchmark (0.5.0)
@@ -144,6 +163,7 @@ GEM
     jbuilder (2.14.1)
       actionview (>= 7.0.0)
       activesupport (>= 7.0.0)
+    jmespath (1.6.2)
     json (2.16.0)
     kaminari (1.2.2)
       activesupport (>= 4.1.0)
@@ -259,6 +279,7 @@ GEM
       erb
       psych (>= 4.0.0)
       tsort
+    redcarpet (3.6.1)
     regexp_parser (2.11.3)
     reline (0.6.3)
       io-console (~> 0.5)
@@ -366,6 +387,7 @@ PLATFORMS
 
 DEPENDENCIES
   annotate
+  aws-sdk-s3
   bootsnap
   brakeman
   capybara
@@ -383,6 +405,7 @@ DEPENDENCIES
   pry-rails
   puma (>= 5.0)
   rails (~> 7.2.3)
+  redcarpet
   rubocop-rails-omakase
   selenium-webdriver
   simple_form
