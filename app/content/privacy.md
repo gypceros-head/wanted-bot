@@ -109,7 +109,8 @@ Amazon Web Services, Inc. が提供するクラウドストレージサービス
 
 本ポリシーに関するお問い合わせは，下記までお願いいたします。
 
-運営者名：〇〇〇〇
 Eメールアドレス：[wantedbot.contact@gmail.com](mailto:wantedbot.contact@gmail.com)
+
+---
 
 【制定日：2025年12月17日】
