@@ -1,8 +1,10 @@
-/ app/views/shared/_footer.html.slim
 footer.bg-slate-500.text-slate-100.mt-8
   .container.mx-auto.px-4.py-4.text-xs.flex.items-center.justify-between
     span
       | © #{Time.current.year} ロボット・イン・モンタージュ - WANTED BOT
 
-    span
-      | Powered by Ruby on Rails
+    .flex.items-center.gap-4
+      = link_to "利用規約", terms_path, class: "hover:underline"
+      = link_to "プライバシーポリシー", privacy_path, class: "hover:underline"
+      span
+        | Powered by Ruby on Rails

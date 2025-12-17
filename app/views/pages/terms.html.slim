@@ -1,0 +1,7 @@
+- breadcrumb :terms
+
+.main-container
+  .container.mx-auto.px-4.py-8
+    h1.text-2xl.font-bold.mb-6 利用規約
+    .prose.prose-slate.max-w-none.legal-doc
+      == render_markdown("terms.md")
