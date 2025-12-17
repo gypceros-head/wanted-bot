@@ -1,5 +1,22 @@
-div
-  h1.text-3xl.font-bold.text-center.mt-10
-    | Wanted Bot（仮トップページ）
-  p.mt-4.text-center
-    | Find me in app/views/home/index.html.slim
+.main-container
+  .container.mx-auto.px-4.py-10
+    h1.text-3xl.md:text-4xl.font-extrabold.tracking-tight.text-center
+      | パーツを組み合わせて、オリジナルのロボット手配書を作ろう
+
+    .max-w-3xl.mx-auto.text-center
+      p.mt-6.text-base.md:text-lg.text-slate-700.leading-relaxed
+        | Wanted Bot は、顔パーツを組み合わせてロボットの「手配書」を作成できる Web アプリです。
+        br
+        | 作成した手配書を掲示板に投稿し、他のユーザーと交流を楽しむこともできます。
+
+      .mt-10.flex.flex-col.sm:flex-row.items-center.justify-center.gap-3
+        - if user_signed_in?
+          = link_to "新規作成へ", new_blueprint_path, class: "inline-flex items-center justify-center rounded-xl bg-slate-900 px-6 py-3 text-white font-semibold shadow-sm hover:bg-slate-800 transition"
+          = link_to "投稿一覧を見る", posts_path, class: "inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 text-slate-900 font-semibold hover:bg-slate-50 transition"
+        - else
+          = link_to "新規登録", new_user_registration_path, class: "inline-flex items-center justify-center rounded-xl bg-slate-900 px-6 py-3 text-white font-semibold shadow-sm hover:bg-slate-800 transition"
+          = link_to "ログイン", new_user_session_path, class: "inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 text-slate-900 font-semibold hover:bg-slate-50 transition"
+
+      - unless user_signed_in?
+        p.mt-4.text-sm.text-slate-600
+          | 登録すると、手配書の作成・投稿・ブックマークなどの機能が使えるようになります。
