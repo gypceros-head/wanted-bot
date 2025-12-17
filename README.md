@@ -53,26 +53,64 @@ SNSでサービスを宣伝できればと考えています。
 * 通知機能（コメント、いいね等）
 
 # ■ 機能の実装方針予定
+
 ### 開発言語 / フレームワーク
 * Ruby: 3.3.10
 * Ruby on Rails: 7.2.3
+* フロントエンド構成:
+  * Hotwire（Turbo / Stimulus）
+  * Importmap（ESM ベースの JavaScript 管理）
+  * Tailwind CSS（tailwindcss-rails）
+* テンプレートエンジン:
+  * Slim
+
 ### データベース
-* PostgreSQL: JSON型カラムを使いたい
+* PostgreSQL
+  * JSON / JSONB カラムを利用し、設計図（Blueprint）の編集状態などの構造化データを保存
+* ActiveRecord による ORM 管理
+
 ### 画像加工・合成
-* ベクター画像を組み合わせる→Fabric.jsなど使用
-* PNG等で出力→MiniMagick等を使用
+* ベクター画像（SVG）をパーツとして管理
+  * inline_svg による SVG の描画・制御
+* 編集画面:
+  * Fabric.js を用いたキャンバス上でのパーツ配置・編集
+* 画像出力:
+  * Active Storage + image_processing
+  * MiniMagick を利用した PNG 生成・変換処理
+* 本番環境では外部ストレージ（AWS S3 等）への切り替えを想定
+
 ### 掲示板機能
-* ransack
-* acts_as_commentable
-* acts_as_votable
+* 投稿（Posts）
+* コメント（Comments）
+* ページネーション:
+  * Kaminari
+* Markdown 表示:
+  * Redcarpet
+* パンくずリスト:
+  * Gretel
+
 ### 認証機能
 * Devise
-* Omniauth（外部認証）
+  * メールアドレス + パスワード認証
+* Omniauth 等の外部認証は将来的な拡張候補
+
 ### デプロイ
 * Render
+* Docker を用いたコンテナ構成
+* Web サーバー:
+  * Puma
+* アセット:
+  * 本番環境で事前コンパイル
+
 ### その他
-* Pundit
-* Noticed 他
+* フォームビルダー:
+  * simple_form
+* セキュリティ・品質管理:
+  * Brakeman
+  * RuboCop Rails Omakase
+* デバッグ:
+  * pry / debug
+* 通知機能（Noticed 等）は将来的な導入候補
 
 # ■ 画面遷移図（Figma）（MVP時点）
 https://www.figma.com/design/mx4fZvFmHEBQIbo6C2zmSk/WANTED?node-id=0-1&t=863bDUcOfMxelJPQ-1
