@@ -28,7 +28,8 @@ class Part < ApplicationRecord
     mouth:     "mouth",
     chin:      "chin",
     accessory: "accessory",
-    basic:    "basic"
+    basic:    "basic",
+    text:     "text"
   }, prefix: true
 
     CATEGORY_MAP = {
@@ -42,6 +43,7 @@ class Part < ApplicationRecord
     "head_base" => "head_base",
     "accessory" => "accessory",
     "basic"     => "basic",
+    "text"      => "text",
 
     "eyes"       => "eye",
     "mouths"     => "mouth",
@@ -61,7 +63,8 @@ class Part < ApplicationRecord
     "chin"      => "あご",
     "head_base" => "頭ベース",
     "accessory" => "アクセサリ",
-    "basic"    => "基本図形"
+    "basic"    => "基本図形",
+    "text"    => "テキスト"
   }.freeze
 
   def category_label
